@@ -1,7 +1,8 @@
 # Core dependencies
-pandas>=2.0.0  # Or specify version constraints
+pandas
 numpy
 adafruit-circuitpython-ads1x15
 adafruit-blinka
 board
 scipy
+pymongo
