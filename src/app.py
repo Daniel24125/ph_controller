@@ -1,5 +1,8 @@
 import time
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    from utils.mock_gpio import GPIO
 
 class PHController:
     """

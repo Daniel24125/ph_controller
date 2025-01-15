@@ -1,0 +1,8 @@
+# Include regular dependencies
+-r requirements.in
+
+# Development packages
+pytest
+black
+flake8
+mypy
