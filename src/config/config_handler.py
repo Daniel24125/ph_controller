@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict, Any
 from datetime import datetime
 import uuid
-from validation_handler import Validator
+from .validation_handler import Validator
 
 
 logging.basicConfig(

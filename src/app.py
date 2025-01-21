@@ -26,7 +26,7 @@ class DeviceSocketClient:
     ):
         self.sio = socketio.Client()
         self.server_url = server_url or os.getenv('SOCKET_SERVER_URL')
-        self.config_handler = ConfigHandler
+        self.config_handler = ConfigHandler()
         self.connected = False
         self.event_handlers_registrations()
 
@@ -42,10 +42,8 @@ class DeviceSocketClient:
         self.connected = True
         logger.info(f"Connected to server: {self.server_url}")
         # Send initial device configuration
-        self.sio.emit('deviceConnected', {
-            'device_id': self.config_handler.get_config().get('device_id'),
-            'config': self.config_handler.get_config()
-        })
+        self.sio.emit("register_client", "rpi")
+        self.sio.emit("get_rpi_config", self.config_handler.get_config())
 
     def _handle_disconnect(self) -> None:
         """Handle disconnection from server."""
@@ -56,14 +54,14 @@ class DeviceSocketClient:
         """Handle configuration update from server."""
         try:
             logger.info(f"Received config update: {data}")
-            if self.config_handler.update_config(data):
-                # Acknowledge successful update
-                self.sio.emit('configUpdateAck', {
-                    'status': 'success',
-                    'device_id': self.config_handler.get_config().get('device_id')
-                })
-            else:
-                raise ValueError("Invalid configuration received")
+            # if self.config_handler.update_config(data):
+            #     # Acknowledge successful update
+            #     self.sio.emit('configUpdateAck', {
+            #         'status': 'success',
+            #         'device_id': self.config_handler.get_config().get('device_id')
+            #     })
+            # else:
+            #     raise ValueError("Invalid configuration received")
         except Exception as e:
             logger.error(f"Error handling config update: {e}")
             self.sio.emit('configUpdateAck', {
@@ -74,15 +72,17 @@ class DeviceSocketClient:
 
     def _handle_config_request(self) -> None:
         """Handle configuration request from server."""
-        self.sio.emit('configResponse', self.config_handler.get_config())
+
+        # self.sio.emit('configResponse', self.config_handler.get_config())
 
     def send_sensor_data(self, sensor_data: Dict[str, Any]) -> None:
         """Send sensor data to server."""
         if self.connected:
-            self.sio.emit('sensorData', {
-                'device_id': self.config_handler.get_config().get('device_id'),
-                'data': sensor_data
-            })
+            print("Send data")
+            # self.sio.emit('sensorData', {
+            #     'device_id': self.config_handler.get_config().get('device_id'),
+            #     'data': sensor_data
+            # })
         else:
             logger.warning("Not connected to server. Cannot send sensor data.")
 
@@ -109,3 +109,11 @@ class DeviceSocketClient:
                 logger.error(f"Error in client: {e}")
                 if self.connected:
                     self.disconnect()
+
+if __name__ == "__main__": 
+    try:
+        socket = DeviceSocketClient()
+        socket.start()
+    except KeyboardInterrupt:
+        logger.info("Disconnecting from the server") 
+        socket.disconnect()
