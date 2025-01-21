@@ -6,6 +6,8 @@ from typing import Dict, Any
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from config.config_handler import ConfigHandler
+
 
 # Load environment variables from .env.local
 env_path = Path('.env.local')

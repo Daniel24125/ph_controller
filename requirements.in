@@ -8,3 +8,4 @@ scipy
 pymongo
 python-dotenv
 python-socketio[client]
+uuid

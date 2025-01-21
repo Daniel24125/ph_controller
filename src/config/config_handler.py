@@ -3,6 +3,9 @@ import logging
 from pathlib import Path
 from typing import Dict, Any
 from datetime import datetime
+import uuid
+from validation_handler import Validator
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -11,22 +14,23 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class ConfigHandler:
-    def __init__(self, config_path: str = '.device_config.json'):
+    def __init__(self, config_path: str = 'src/config/config_files/device_config.json'):
         self.config_path = Path(config_path)
         self.config = self._load_config()
-
     def _load_config(self) -> Dict[str, Any]:
         """Load device configuration from file."""
         try:
             if self.config_path.exists():
                 with open(self.config_path, 'r') as f:
-                    print(self.config_path)
                     return json.load(f)
             else:
-                default_config = {
-                    "device_id": "pH_monitor_01",
-                    "sensors": [],
-                    "last_updated": datetime.now().isoformat()
+                default_config={
+                    "id": uuid.uuid4(), 
+                    "name": "pH Monitor Device",
+                    "createdAt": datetime.now().isoformat(),
+                    "isConnected": False,
+                    "status": "ready",
+                    "configurations": []
                 }
                 self._save_config(default_config)
                 return default_config
@@ -51,32 +55,38 @@ class ConfigHandler:
         """Get current configuration."""
         return self.config
 
-    def update_config(self, new_config: Dict[str, Any]) -> bool:
+    def update_config(self, config: Dict[str, Any]) -> bool:
+        
         """Update configuration if valid."""
-        if self._validate_config(new_config):
+        new_config = {
+            **self.config,
+            **config,
+        }
+        config_validator = Validator(new_config)
+
+        if  config_validator._validate_config():
             new_config['last_updated'] = datetime.now().isoformat()
             self.config = new_config
             self._save_config(new_config)
+            logger.info("Configuration file successfully updated")
             return True
         return False
 
-    def _validate_config(self, config: Dict[str, Any]) -> bool:
-        """Validate configuration data."""
-        required_fields = ['device_id', 'sensors']
-        if not all(field in config for field in required_fields):
-            return False
-        
-        # Validate sensors configuration
-        for sensor in config.get('sensors', []):
-            if not all(field in sensor for field in ['id', 'type']):
-                return False
-            if sensor['type'] not in ['temperature', 'pH']:
-                return False
-        
-        return True
+   
 
 
 
 if __name__ == "__main__":
     config = ConfigHandler()
-    #logger.info(config)
+    if config.update_config({
+         "id": "world",
+        "name": "pH Monitor Device2",
+        "configurations": [
+            {
+            "id": "dfbndgn",
+            }
+        ],
+    }):
+        print("Config updated")
+    else: 
+        print("Error on updating config")
