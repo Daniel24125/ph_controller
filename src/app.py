@@ -1,121 +1,109 @@
-import time
-try:
-    import RPi.GPIO as GPIO
-except ImportError:
-    from utils.mock_gpio import GPIO
 
-class PHController:
-    """
-        PHController class to monitor and control the pH of an aquous solution
-        args: 
-            acid_pump_pin: Pin in the RPi associated with the acid pump;
-            base_pump_pin: Pin in the RPi associated with the base pump;
-            target_ph: pH value that the user whats to reach;
-            check_interval: period of time in seconds that the controller will compare the pH read with the target_pH;
-            max_pump_time: maximum time in seconds that the pump/vsalve will be open;
-            margin: the pH margin in wich the controller will accept the pH value;
-            mode: controller mode. Possible values: 
-                acidic: only connects to the acidic pump and only actuates if the pH is above the target pH;
-                alkaline: only connects to the base pump and only actuates if the pH is below the target pH;
-                both: connects to both the acidic and base pumps and actuates if the pH is above or below the target pH;
+# socket_client.py
+import socketio
+import logging
+from typing import Dict, Any
+from pathlib import Path
+import os
+from dotenv import load_dotenv
 
-    """
-    def __init__(self, acid_pump_pin, base_pump_pin, target_ph, check_interval=5, max_pump_time=30, margin=0.1, mode="acidic"):
-        self.acid_pump_pin = acid_pump_pin
-        self.base_pump_pin = base_pump_pin
-        self.target_ph = target_ph
-        self.check_interval = check_interval
-        self.max_pump_time = max_pump_time
-        self.margin = margin
-        self.mode = mode
-        self.init_gpio()
+# Load environment variables from .env.local
+env_path = Path('.env.local')
+load_dotenv(dotenv_path=env_path)
 
-    def set_acid_pump_pin(self, pin):
-        self.acid_pump_pin = pin
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
-    def set_base_pump_pin(self, pin):
-        self.base_pump_pin = pin
+class DeviceSocketClient:
+    def __init__(
+        self, 
+        server_url: str = None
+    ):
+        self.sio = socketio.Client()
+        self.server_url = server_url or os.getenv('SOCKET_SERVER_URL')
+        self.config_handler = ConfigHandler
+        self.connected = False
+        self.event_handlers_registrations()
 
-    def set_target_ph(self, ph):
-        self.target_ph = ph
+    def event_handlers_registrations(self):
+        # Register event handlers
+        self.sio.on('connect', self._handle_connect)
+        self.sio.on('disconnect', self._handle_disconnect)
+        self.sio.on('updateDeviceConfig', self._handle_config_update)
+        self.sio.on('requestConfig', self._handle_config_request)
 
-    def set_check_interval(self, interval):
-        self.check_interval = interval
+    def _handle_connect(self) -> None:
+        """Handle successful connection to server."""
+        self.connected = True
+        logger.info(f"Connected to server: {self.server_url}")
+        # Send initial device configuration
+        self.sio.emit('deviceConnected', {
+            'device_id': self.config_handler.get_config().get('device_id'),
+            'config': self.config_handler.get_config()
+        })
 
-    def set_max_pump_time(self, time):
-        self.max_pump_time = time
-    
-    def set_margin(self, ph_margin):
-        self.margin = ph_margin
-    
-    def set_mode(self, mode):
-        print(mode)
-        if mode != "acidic" or mode != "alkaline" or mode != "both":
-            raise NameError("You are trying to set the controller mode to an invalid mode. Available options: acidic | alkaline | both")
-        self.mode = mode
+    def _handle_disconnect(self) -> None:
+        """Handle disconnection from server."""
+        self.connected = False
+        logger.info("Disconnected from server")
 
-    def init_gpio(self):
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.acid_pump_pin, GPIO.OUT)
-        GPIO.setup(self.base_pump_pin, GPIO.OUT)
-
-
-    def read_ph(self):
-        # This method should be implemented to read pH from your sensor
-        # For now, we'll use a placeholder
-        return 7.15
-
-    def calculate_pump_time(self, current_ph):
-        ph_difference = abs(self.target_ph - current_ph)
-        # Scale the pump time based on pH difference, max 10 seconds
-        pump_time = min(ph_difference * 2, self.max_pump_time)
-        return pump_time
-
-    def determine_pump(self, current_ph):
-        is_acidic = current_ph < self.target_ph ## if the solution is acidic, you need to pump a base solution
-        define_base_pump = self.mode == "alkaline" or self.mode == "both"
-        define_acid_pump = self.mode == "acidic" or self.mode == "both"
-        if is_acidic and define_base_pump:
-            print("Base pump activated!")
-            pump_pin = self.base_pump_pin
-        elif not is_acidic and define_acid_pump:
-            print("Acidic pump activated!")
-            pump_pin = self.acid_pump_pin
-        else:
-            return  # pH is at target, no adjustment needed
-        return pump_pin
-
-    def adjust_ph(self):
-        current_ph = self.read_ph()
-        if self.target_ph - self.margin <= current_ph <= self.target_ph + self.margin:
-            print("pH value with the margin values. No adjustment necessary")
-            return
-        pump_pin = self.determine_pump(current_ph)
-        if not pump_pin: 
-            return 
-        pump_time = self.calculate_pump_time(current_ph)
-        print(f"Pumping for {pump_time} seconds")
-        self.actviate_pump(pump_pin, pump_time)
-
-    def actviate_pump(self, pump_pin, pump_time):
-        GPIO.output(pump_pin, GPIO.HIGH)
-        time.sleep(pump_time)
-        GPIO.output(pump_pin, GPIO.LOW)
-
-    def run(self):
-        print("Running the pH Controller")
+    def _handle_config_update(self, data: Dict[str, Any]) -> None:
+        """Handle configuration update from server."""
         try:
-            while True:
-                self.adjust_ph()
-                time.sleep(self.check_interval)
-        except KeyboardInterrupt:
-            GPIO.cleanup()
-            print("Operation aborted by the user...")
+            logger.info(f"Received config update: {data}")
+            if self.config_handler.update_config(data):
+                # Acknowledge successful update
+                self.sio.emit('configUpdateAck', {
+                    'status': 'success',
+                    'device_id': self.config_handler.get_config().get('device_id')
+                })
+            else:
+                raise ValueError("Invalid configuration received")
+        except Exception as e:
+            logger.error(f"Error handling config update: {e}")
+            self.sio.emit('configUpdateAck', {
+                'status': 'error',
+                'message': str(e),
+                'device_id': self.config_handler.get_config().get('device_id')
+            })
 
-# Usage example:
-controller = PHController(acid_pump_pin=17, base_pump_pin=18, target_ph=7.0)
-try: 
-    controller.set_mode("acidic")
-except NameError as err:
-    GPIO.cleanup()
-    print("An error occured: ", err)
+    def _handle_config_request(self) -> None:
+        """Handle configuration request from server."""
+        self.sio.emit('configResponse', self.config_handler.get_config())
+
+    def send_sensor_data(self, sensor_data: Dict[str, Any]) -> None:
+        """Send sensor data to server."""
+        if self.connected:
+            self.sio.emit('sensorData', {
+                'device_id': self.config_handler.get_config().get('device_id'),
+                'data': sensor_data
+            })
+        else:
+            logger.warning("Not connected to server. Cannot send sensor data.")
+
+    def connect(self) -> None:
+        """Connect to the Socket.IO server."""
+        try:
+            self.sio.connect(self.server_url)
+        except Exception as e:
+            logger.error(f"Connection error: {e}")
+
+    def disconnect(self) -> None:
+        """Disconnect from the Socket.IO server."""
+        if self.connected:
+            self.sio.disconnect()
+
+    def start(self) -> None:
+        """Start the Socket.IO client with automatic reconnection."""
+        while True:
+            try:
+                if not self.connected:
+                    self.connect()
+                self.sio.wait()
+            except Exception as e:
+                logger.error(f"Error in client: {e}")
+                if self.connected:
+                    self.disconnect()

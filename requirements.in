@@ -6,3 +6,5 @@ adafruit-blinka
 board
 scipy
 pymongo
+python-dotenv
+python-socketio[client]
