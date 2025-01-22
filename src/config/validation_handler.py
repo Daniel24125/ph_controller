@@ -1,16 +1,11 @@
 import logging
 from typing import Dict, Any
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+from utils.logger import logger
 
 
 class Validator: 
-    def __init__(self, config):
-        self.config = config
+    def __init__(self):
+        pass
 
     def _validate_sensor(self, sensor: Dict[str, Any]) -> bool:
         """Validate sensor configuration."""
@@ -21,7 +16,6 @@ class Validator:
             'maxValveTimeOpen': (int, float),
             'targetPh': (int, float),
             'probePort': int,
-            'valvePort': int,
             'checkInterval': (int, float),
             'createdAt': str
         }
@@ -35,16 +29,16 @@ class Validator:
                 return False
 
         # Additional validation rules
-        if sensor['mode'] not in ['acidic', 'basic']:
+        if sensor['mode'] not in ['acidic', 'alkaline', "both"]:
             logger.error("Invalid sensor mode")
             return False
         if not (0 < sensor['margin'] <= 1):
             logger.error("Invalid margin value")
             return False
-        if not (0 < sensor['maxValveTimeOpen'] <= 300):
+        if not (1 < sensor['maxValveTimeOpen'] <= 300):
             logger.error("Invalid maxValveTimeOpen value")
             return False
-        if not (0 <= sensor['targetPh'] <= 14):
+        if not (1 <= sensor['targetPh'] <= 14):
             logger.error("Invalid targetPh value")
             return False
 
@@ -52,26 +46,36 @@ class Validator:
 
     def _validate_location(self, location: Dict[str, Any]) -> bool:
         """Validate location configuration."""
-        required_fields = ['id', 'name', 'createdAt', 'sensor']
+        required_fields = ['id', 'name', 'createdAt', 'sensors']
         if not all(field in location for field in required_fields):
+            logger.error("Some fields are missing in the location data")
             return False
         
-        if not isinstance(location['sensor'], list):
+        if not isinstance(location['sensors'], list):
             return False
 
-        return all(self._validate_sensor(sensor) for sensor in location['sensor'])
+        return all(self._validate_sensor(sensor) for sensor in location['sensors'])
 
-    def _validate_config(self) -> bool:
+    def _validate_device_configuration(self, device_conf):
+        """Validate device configuration."""
+        required_fields = ["id", "name", "createdAt", "locations"]
+        if not all(field in device_conf for field in required_fields):
+            logger.error("Some fields are missing in the device configuraion data")
+            return False
+        return all(self._validate_location(location) for location in device_conf['locations'])
+    
+
+    def _validate_config(self, config) -> bool:
         """Validate the complete configuration structure."""
         try:
-            required_fields = ['id', 'name', 'createdAt', 'isConnected', 'status', 'configurations']
-            if not all(field in self.config for field in required_fields):
+            required_fields = ['id', 'name', 'createdAt', 'status', 'configurations']
+            if not all(field in config for field in required_fields):
                 return False
 
-            if not isinstance(self.config['configurations'], list):
+            if not isinstance(config['configurations'], list):
                 return False
 
-            for configuration in self.config['configurations']:
+            for configuration in config['configurations']:
                 if not all(field in configuration for field in ['id', 'createdAt', 'locations']):
                     return False
                 

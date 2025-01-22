@@ -2,22 +2,22 @@
   "id": "dvdwvwevewvwddvwev",
   "name": "pH Monitor Device",
   "createdAt": "2025-01-21T10:50:53.003Z",
-  "isConnected": true,
   "status": "ready",
   "configurations": [
     {
       "id": "woevbnwerojibjwfbnw",
+      "name": "1 pH Sensor configuration",
       "createdAt": "2025-01-21T10:50:53.003Z",
       "locations": [
         {
           "id": "sdkjvbirkejwbvweiojrg",
-          "name": "R1",
+          "name": "R19",
           "createdAt": "2025-01-21T10:50:53.003Z",
-          "sensor": [
+          "sensors": [
             {
               "id": "wfwefvwecvwevwev",
               "mode": "acidic",
-              "margin": 0.1,
+              "margin": 1,
               "maxValveTimeOpen": 30,
               "targetPh": 7.0,
               "probePort": 17,

@@ -6,8 +6,7 @@ from typing import Dict, Any
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-from config.config_handler import ConfigHandler
-
+from config.config_handler import DeviceConfigHandler
 
 # Load environment variables from .env.local
 env_path = Path('.env.local')
@@ -26,7 +25,7 @@ class DeviceSocketClient:
     ):
         self.sio = socketio.Client()
         self.server_url = server_url or os.getenv('SOCKET_SERVER_URL')
-        self.config_handler = ConfigHandler()
+        self.config_handler = DeviceConfigHandler()
         self.connected = False
         self.event_handlers_registrations()
 
@@ -67,7 +66,7 @@ class DeviceSocketClient:
             self.sio.emit('configUpdateAck', {
                 'status': 'error',
                 'message': str(e),
-                'device_id': self.config_handler.get_config().get('device_id')
+                'device_id': self.config_handler.get_config().get('id')
             })
 
     def _handle_config_request(self) -> None:
@@ -112,7 +111,7 @@ class DeviceSocketClient:
 
 if __name__ == "__main__": 
     try:
-        socket = DeviceSocketClient()
+        socket = DeviceSocketClient(server_url="http://localhost:8000")
         socket.start()
     except KeyboardInterrupt:
         logger.info("Disconnecting from the server") 
