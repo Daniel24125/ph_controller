@@ -27,8 +27,6 @@ class DeviceConfigHandler:
         self.config = self._load_config()
         self.validator = Validator()
 
-  
-
     def _load_config(self) -> Dict[str, Any]:
         """Load device configuration from file."""
         try:
@@ -68,6 +66,7 @@ class DeviceConfigHandler:
         return self.config
 
     def parse_updated_info(self, info, forbidden_keys):
+        """Parses data received to be applied into the config file."""
         for key in forbidden_keys: 
             if key in info: 
                 logger.info(f"The new config has the attribute which will be removed: {key}")
@@ -82,7 +81,17 @@ class DeviceConfigHandler:
         })
         return True
     
+    def add_device_configuration(self, data: Dict[str, Any] )-> bool:
+        """Adds a new device configuration, i.e., new locations and sensors"""
+        if not self.validator._validate_device_configuration(data): 
+            logger.error("The configuration information submited does not contain the correct fields")
+            raise ValueError("The configuration information submited does not contain the correct fields")
+        self.config["configurations"].append(data)
+        self._save_config(self.config)
+        return True
+ 
     def update_device_configuration_info(self, info: Dict[str, Any] )-> bool:
+        """Updates the device name"""
         for i, conf in enumerate(self.config["configurations"]): 
             if conf["id"] == info["id"]:
                 parsedInfo = self.parse_updated_info(info, forbidden_keys_configuration_info)
@@ -92,19 +101,20 @@ class DeviceConfigHandler:
                 }
         self._save_config(self.config)
         return True
-
-    def add_device_configuration(self, data: Dict[str, Any] )-> bool:
-        if not self.validator._validate_device_configuration(data): 
-            logger.error("The configuration information submited does not contain the correct fields")
-            return False
-        self.config["configurations"].append(data)
+    
+    def delete_device_configuration(self, configurationID): 
+        for i, c in enumerate(self.config["configurations"]): 
+            if c["id"] == configurationID: 
+                del self.config["configurations"][i]
         self._save_config(self.config)
         return True
-
-    def delete_device_configuration(self, device_configuration_id): 
-        for i, c in enumerate(self.config["configurations"]): 
-            if c["id"] == device_configuration_id: 
-                del self.config["configurations"][i]
+    
+    def add_location(self, data, configurationID):
+        if not self.validator._validate_location(data): 
+            self.report_error("The location information submited does not contain the correct fields")
+        for i, conf in enumerate(self.config["configurations"]): 
+            if conf["id"] == configurationID:
+                self.config["configurations"][i]["locations"].append(data)
         self._save_config(self.config)
         return True
     
@@ -120,17 +130,7 @@ class DeviceConfigHandler:
                         }
         self._save_config(self.config)
         return True
-
-    def add_location(self, data, configurationID):
-        if not self.validator._validate_location(data): 
-            logger.error("The location information submited does not contain the correct fields")
-            return False
-        for i, conf in enumerate(self.config["configurations"]): 
-            if conf["id"] == configurationID:
-                self.config["configurations"][i]["locations"].append(data)
-        self._save_config(self.config)
-        return True
-
+  
     def delete_location(self, device_configuration_id, locationID): 
         for i, c in enumerate(self.config["configurations"]): 
             if c["id"] == device_configuration_id: 
@@ -140,10 +140,21 @@ class DeviceConfigHandler:
         self._save_config(self.config)
         return True
 
+    def add_sensor(self, data, configurationID, locationID):
+        if not self.validator._validate_sensor(data): 
+            self.report_error("The sensor information submited does not contain the correct fields")
+        for i, conf in enumerate(self.config["configurations"]): 
+            if conf["id"] == configurationID:
+                for j, loc in enumerate(conf["locations"]):
+                    if loc["id"] == locationID:
+                        self.config["configurations"][i]["locations"][j]["sensors"].append(data)
+        self._save_config(self.config)
+        return True
+    
     def update_sensor_info(self, data, configurationID, locationID, sensorID):
         if not self.validator._validate_sensor(data):
             logger.error("The sensor information submited does not contain the correct fields")
-            return False
+            self.report_error("The sensor information submited does not contain the correct fields")
         parsedInfo = self.parse_updated_info(data, forbidden_keys_sensor_info)
         for i, conf in enumerate(self.config["configurations"]): 
             if conf["id"] == configurationID:
@@ -157,19 +168,7 @@ class DeviceConfigHandler:
                                 }
         self._save_config(self.config)
         return True
-
-    def add_sensor(self, data, configurationID, locationID):
-        if not self.validator._validate_sensor(data): 
-            logger.error("The sensor information submited does not contain the correct fields")
-            return False
-        for i, conf in enumerate(self.config["configurations"]): 
-            if conf["id"] == configurationID:
-                for j, loc in enumerate(conf["locations"]):
-                    if loc["id"] == locationID:
-                        self.config["configurations"][i]["locations"][j]["sensors"].append(data)
-        self._save_config(self.config)
-        return True
-
+    
     def delete_sensor(self, device_configuration_id, locationID, sensorID): 
         for i, c in enumerate(self.config["configurations"]): 
             if c["id"] == device_configuration_id: 
@@ -180,6 +179,11 @@ class DeviceConfigHandler:
                                 del self.config["configurations"][i]["locations"][j]["sensors"][k]
         self._save_config(self.config)
         return True
+
+    def report_error(msg): 
+        logger.error(msg)
+        raise ValueError(msg) 
+
 
 if __name__ == "__main__":
     config = DeviceConfigHandler()

@@ -6,6 +6,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from config.config_handler import DeviceConfigHandler, Validator
+from operator import itemgetter
 
 # Load environment variables from .env.local
 env_path = Path('.env.local')
@@ -18,6 +19,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class DeviceSocketClient:
+
     def __init__(
         self, 
         server_url: str = None
@@ -34,7 +36,31 @@ class DeviceSocketClient:
         self.sio.on('connect', self._handle_connect)
         self.sio.on('disconnect', self._handle_disconnect)
         self.sio.on('updateDeviceConfig', self._handle_config_update)
-        self.sio.on('requestConfig', self._handle_config_request)
+
+    def appy_cmd(self, cmd):
+        """Applies the received command after validation"""
+        cmd_pipline={
+            "device|update": {"fn": self.config_handler.update_device_info, "args": None},
+            "configuration|create": {"fn": self.config_handler.add_device_configuration, "args": None},
+            "configuration|update": {"fn": self.config_handler.update_device_configuration_info, "args": None},
+            "configuration|delete": {"fn": self.config_handler.delete_device_configuration, "args": ["configurationID"]},
+            "location|create": {"fn": self.config_handler.add_location, "args": ["configurationID"]},
+            "location|update": {"fn": self.config_handler.update_location_info, "args": ["configurationID", "locationID"]},
+            "location|delete": {"fn": self.config_handler.delete_location, "args": ["configurationID", "locationID"]},
+            "sensor|create": {"fn": self.config_handler.add_sensor, "args": ["configurationID", "locationID"]},
+            "sensor|update": {"fn": self.config_handler.update_sensor_info, "args": ["configurationID", "locationID", "sensorID"]},
+            "sensor|delete": {"fn": self.config_handler.delete_sensor, "args": ["configurationID", "locationID", "sensorID"]},
+        }
+        context, operation, data = itemgetter("context", "operation", "data")(cmd)
+        pipe_cmd = f"{context}|{operation}"
+        pipeline_fn = cmd_pipline[pipe_cmd]["fn"]
+        pipeline_args = cmd_pipline[pipe_cmd]["args"]
+        print(pipe_cmd,  bool(pipeline_args))
+        if bool(pipeline_args): 
+            pipeline_fn(data, *pipeline_args)
+        else: 
+            pipeline_fn(data)
+
 
     def _handle_connect(self) -> None:
         """Handle successful connection to server."""
@@ -55,7 +81,7 @@ class DeviceSocketClient:
             args: 
                 cmd: {
                     context: device | configuration | location | sensor, 
-                    operation: read | create | update | delete
+                    operation: create | update | delete
                     data: {
                         id -> in CUD operations,
                         name -> U operations,
@@ -69,18 +95,14 @@ class DeviceSocketClient:
         try:
             logger.info(f"Received config update: {cmd}")
             self.validator.validateConfigOperationCommand(cmd)
-
+            self.appy_cmd(cmd)
+            
         except Exception as e:
             logger.error(f"Error handling config update: {e}")
             self.sio.emit('error', {
                 'message': str(e),
                 'device_id': self.config_handler.get_config().get('id')
             })
-
-    def _handle_config_request(self) -> None:
-        """Handle configuration request from server."""
-
-        # self.sio.emit('configResponse', self.config_handler.get_config())
 
     def send_sensor_data(self, sensor_data: Dict[str, Any]) -> None:
         """Send sensor data to server."""

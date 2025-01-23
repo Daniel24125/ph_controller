@@ -8,7 +8,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from utils.logger import logger
 
 required_fields = ["context", "operation", "data"]
-context_values = ["device", "configurations", "location", "sensor"]
+context_values = ["device", "configuration", "location", "sensor"]
 operations_values = ["read", "create", "update", "delete"]
 
 class Validator: 
