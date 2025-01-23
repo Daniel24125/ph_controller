@@ -96,6 +96,8 @@ class DeviceSocketClient:
             logger.info(f"Received config update: {cmd}")
             self.validator.validateConfigOperationCommand(cmd)
             self.appy_cmd(cmd)
+            self.sio.emit("refresh_device_data", self.config_handler.get_config())
+
             
         except Exception as e:
             logger.error(f"Error handling config update: {e}")

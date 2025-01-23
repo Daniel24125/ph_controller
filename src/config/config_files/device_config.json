@@ -32,12 +32,12 @@
     {
       "id": "wobjgfijwerbgiwerjbgv",
       "name": "odwsnfvowerkinvow",
-      "createdAt": "2025-01-23T17:31:25.198Z",
+      "createdAt": "2025-01-23T19:40:54.074Z",
       "locations": [
         {
           "id": "ibugeiuebrg",
           "name": "odwsnfvowerkinvow",
-          "createdAt": "2025-01-23T17:31:25.198Z",
+          "createdAt": "2025-01-23T19:40:54.074Z",
           "sensors": [
             {
               "id": "ehbvgihweribj",
@@ -47,31 +47,7 @@
               "targetPh": 10,
               "probePort": 17,
               "checkInterval": 10,
-              "createdAt": "2025-01-23T17:31:25.198Z"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "wobjgfijwerbgiwerjbgv",
-      "name": "odwsnfvowerkinvow",
-      "createdAt": "2025-01-23T17:31:41.597Z",
-      "locations": [
-        {
-          "id": "ibugeiuebrg",
-          "name": "odwsnfvowerkinvow",
-          "createdAt": "2025-01-23T17:31:41.597Z",
-          "sensors": [
-            {
-              "id": "ehbvgihweribj",
-              "mode": "acidic",
-              "margin": 0.1,
-              "maxValveTimeOpen": 10,
-              "targetPh": 10,
-              "probePort": 17,
-              "checkInterval": 10,
-              "createdAt": "2025-01-23T17:31:41.597Z"
+              "createdAt": "2025-01-23T19:40:54.074Z"
             }
           ]
         }
