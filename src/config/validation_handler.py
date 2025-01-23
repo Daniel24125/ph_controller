@@ -1,12 +1,30 @@
 import logging
 from typing import Dict, Any
+import sys 
+from pathlib import Path
+
+# Add parent directory to Python path
+sys.path.append(str(Path(__file__).parent.parent))
 from utils.logger import logger
 
+required_fields = ["context", "operation", "data"]
+context_values = ["device", "configurations", "location", "sensor"]
+operations_values = ["read", "create", "update", "delete"]
 
 class Validator: 
     def __init__(self):
         pass
 
+    def validateConfigOperationCommand(self, cmd):
+        """Parses the commands received from the server for device configuration operations""" 
+        for field in required_fields: 
+            if field not in cmd:
+                raise ValueError(f"Missing required command field: {field}")
+        if not cmd["context"] in context_values: 
+            raise ValueError("The operation context you provided is invalid.")
+        if not cmd["operation"] in operations_values: 
+            raise ValueError("The operation type you provided is invalid.")
+        
     def _validate_sensor(self, sensor: Dict[str, Any]) -> bool:
         """Validate sensor configuration."""
         required_fields = {
@@ -89,3 +107,14 @@ class Validator:
         except Exception as e:
             logger.error(f"Configuration validation error: {e}")
             return False
+
+if __name__ == "__main__": 
+    try: 
+        validator = Validator()
+        validator.validateConfigOperationCommand({
+            "context": "device",
+            "operation": "read",
+            "data": "feioeoi"
+        })
+    except Exception as e:
+        print(e)

@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.logger import logger
-from validation_handler import Validator
+from .validation_handler import Validator
 
 forbidden_keys_info = ["id", "createdAt", "status", "configurations"]
 
@@ -26,6 +26,8 @@ class DeviceConfigHandler:
         self.config_path = Path(config_path)
         self.config = self._load_config()
         self.validator = Validator()
+
+  
 
     def _load_config(self) -> Dict[str, Any]:
         """Load device configuration from file."""

@@ -1,12 +1,11 @@
 
-# socket_client.py
 import socketio
 import logging
 from typing import Dict, Any
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-from config.config_handler import DeviceConfigHandler
+from config.config_handler import DeviceConfigHandler, Validator
 
 # Load environment variables from .env.local
 env_path = Path('.env.local')
@@ -28,6 +27,7 @@ class DeviceSocketClient:
         self.config_handler = DeviceConfigHandler()
         self.connected = False
         self.event_handlers_registrations()
+        self.validator = Validator()
 
     def event_handlers_registrations(self):
         # Register event handlers
@@ -49,22 +49,30 @@ class DeviceSocketClient:
         self.connected = False
         logger.info("Disconnected from server")
 
-    def _handle_config_update(self, data: Dict[str, Any]) -> None:
-        """Handle configuration update from server."""
+    def _handle_config_update(self, cmd: Dict[str, Any]) -> None:
+        """
+            Handle configuration update from server.
+            args: 
+                cmd: {
+                    context: device | configuration | location | sensor, 
+                    operation: read | create | update | delete
+                    data: {
+                        id -> in CUD operations,
+                        name -> U operations,
+                        configurationData -> U operations, 
+                        locationsData -> U operations,
+                        sensorData -> U operations,
+                    }
+                }
+        """ 
+        
         try:
-            logger.info(f"Received config update: {data}")
-            # if self.config_handler.update_config(data):
-            #     # Acknowledge successful update
-            #     self.sio.emit('configUpdateAck', {
-            #         'status': 'success',
-            #         'device_id': self.config_handler.get_config().get('device_id')
-            #     })
-            # else:
-            #     raise ValueError("Invalid configuration received")
+            logger.info(f"Received config update: {cmd}")
+            self.validator.validateConfigOperationCommand(cmd)
+
         except Exception as e:
             logger.error(f"Error handling config update: {e}")
-            self.sio.emit('configUpdateAck', {
-                'status': 'error',
+            self.sio.emit('error', {
                 'message': str(e),
                 'device_id': self.config_handler.get_config().get('id')
             })
