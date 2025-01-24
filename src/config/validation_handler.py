@@ -1,4 +1,3 @@
-import logging
 from typing import Dict, Any
 import sys 
 from pathlib import Path
@@ -80,6 +79,7 @@ class Validator:
         if not all(field in device_conf for field in required_fields):
             logger.error("Some fields are missing in the device configuraion data")
             return False
+        
         return all(self._validate_location(location) for location in device_conf['locations'])
     
 

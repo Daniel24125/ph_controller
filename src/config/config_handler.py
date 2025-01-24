@@ -83,9 +83,11 @@ class DeviceConfigHandler:
     
     def add_device_configuration(self, data: Dict[str, Any] )-> bool:
         """Adds a new device configuration, i.e., new locations and sensors"""
+        if len(self.config["configurations"]) == 3:
+            self.report_error("You reached the maximum number of configurations on this device")
+
         if not self.validator._validate_device_configuration(data): 
-            logger.error("The configuration information submited does not contain the correct fields")
-            raise ValueError("The configuration information submited does not contain the correct fields")
+            self.report_error("The configuration information submited does not contain the correct fields")
         self.config["configurations"].append(data)
         self._save_config(self.config)
         return True
@@ -180,7 +182,7 @@ class DeviceConfigHandler:
         self._save_config(self.config)
         return True
 
-    def report_error(msg): 
+    def report_error(self, msg): 
         logger.error(msg)
         raise ValueError(msg) 
 

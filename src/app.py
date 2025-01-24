@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 from config.config_handler import DeviceConfigHandler, Validator
 from operator import itemgetter
+import traceback
 
 # Load environment variables from .env.local
 env_path = Path('.env.local')
@@ -55,9 +56,9 @@ class DeviceSocketClient:
         pipe_cmd = f"{context}|{operation}"
         pipeline_fn = cmd_pipline[pipe_cmd]["fn"]
         pipeline_args = cmd_pipline[pipe_cmd]["args"]
-        print(pipe_cmd,  bool(pipeline_args))
         if bool(pipeline_args): 
-            pipeline_fn(data, *pipeline_args)
+            args = [data[arg] for arg in pipeline_args]
+            pipeline_fn(data, *args)
         else: 
             pipeline_fn(data)
 
@@ -97,9 +98,8 @@ class DeviceSocketClient:
             self.validator.validateConfigOperationCommand(cmd)
             self.appy_cmd(cmd)
             self.sio.emit("refresh_device_data", self.config_handler.get_config())
-
-            
         except Exception as e:
+            logger.error(traceback.format_exc())
             logger.error(f"Error handling config update: {e}")
             self.sio.emit('error', {
                 'message': str(e),

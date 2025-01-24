@@ -5,54 +5,33 @@
   "status": "ready",
   "configurations": [
     {
-      "id": "woevbnwerojibjwfbnw",
-      "name": "1 pH Sensor configuration",
-      "createdAt": "2025-01-21T10:50:53.003Z",
+      "id": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
+      "name": "Single pH monitor",
+      "createdAt": "2025-01-24T11:43:12.726Z",
       "locations": [
         {
-          "id": "sdkjvbirkejwbvweiojrg",
-          "name": "R19",
-          "createdAt": "2025-01-21T10:50:53.003Z",
-          "sensors": [
-            {
-              "id": "wfwefvwecvwevwev",
-              "mode": "acidic",
-              "margin": 1,
-              "maxValveTimeOpen": 30,
-              "targetPh": 7.0,
-              "probePort": 17,
-              "valvePort": 18,
-              "checkInterval": 5,
-              "createdAt": "2025-01-21T10:50:53.003Z"
-            }
-          ]
+          "configurationID": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
+          "name": "Test Location",
+          "id": "ba885637-1f61-4f8a-8412-c26e2157421b",
+          "createdAt": "2025-01-24T17:54:41.583Z",
+          "sensors": []
         }
-      ]
+      ],
+      "lastUpdatedAt": "2025-01-24T14:17:06.732Z"
     },
     {
-      "id": "wobjgfijwerbgiwerjbgv",
-      "name": "odwsnfvowerkinvow",
-      "createdAt": "2025-01-23T19:40:54.074Z",
+      "id": "39e7dd20-6e4d-46b0-ae54-c16191a0f591",
+      "name": "Test Configuration",
+      "createdAt": "2025-01-24T17:54:26.527Z",
       "locations": [
         {
-          "id": "ibugeiuebrg",
-          "name": "odwsnfvowerkinvow",
-          "createdAt": "2025-01-23T19:40:54.074Z",
-          "sensors": [
-            {
-              "id": "ehbvgihweribj",
-              "mode": "acidic",
-              "margin": 0.1,
-              "maxValveTimeOpen": 10,
-              "targetPh": 10,
-              "probePort": 17,
-              "checkInterval": 10,
-              "createdAt": "2025-01-23T19:40:54.074Z"
-            }
-          ]
+          "configurationID": "39e7dd20-6e4d-46b0-ae54-c16191a0f591",
+          "name": "Test Location 2",
+          "id": "b3a2b394-11c6-402f-886c-957bab3b2a90",
+          "createdAt": "2025-01-24T17:54:49.350Z",
+          "sensors": []
         }
       ]
     }
-  ],
-  "last_updated": "2025-01-21T11:10:08.358597"
+  ]
 }
