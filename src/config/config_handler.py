@@ -133,7 +133,7 @@ class DeviceConfigHandler:
         self._save_config(self.config)
         return True
   
-    def delete_location(self, device_configuration_id, locationID): 
+    def delete_location(self, _ , device_configuration_id, locationID): 
         for i, c in enumerate(self.config["configurations"]): 
             if c["id"] == device_configuration_id: 
                 for j, loc in enumerate(c["locations"]): 
