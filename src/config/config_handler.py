@@ -104,7 +104,7 @@ class DeviceConfigHandler:
         self._save_config(self.config)
         return True
     
-    def delete_device_configuration(self, configurationID): 
+    def delete_device_configuration(self,_, configurationID): 
         for i, c in enumerate(self.config["configurations"]): 
             if c["id"] == configurationID: 
                 del self.config["configurations"][i]
@@ -171,7 +171,7 @@ class DeviceConfigHandler:
         self._save_config(self.config)
         return True
     
-    def delete_sensor(self, device_configuration_id, locationID, sensorID): 
+    def delete_sensor(self, _, device_configuration_id, locationID, sensorID): 
         for i, c in enumerate(self.config["configurations"]): 
             if c["id"] == device_configuration_id: 
                 for j, loc in enumerate(c["locations"]): 

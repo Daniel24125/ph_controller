@@ -58,7 +58,6 @@ class DeviceSocketClient:
         pipeline_args = cmd_pipline[pipe_cmd]["args"]
         if bool(pipeline_args): 
             args = [data[arg] for arg in pipeline_args]
-            print(args)
             pipeline_fn(data, *args)
         else: 
             pipeline_fn(data)

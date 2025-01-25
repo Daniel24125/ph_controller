@@ -18,20 +18,6 @@
         }
       ],
       "lastUpdatedAt": "2025-01-24T14:17:06.732Z"
-    },
-    {
-      "id": "39e7dd20-6e4d-46b0-ae54-c16191a0f591",
-      "name": "Test Configuration",
-      "createdAt": "2025-01-24T17:54:26.527Z",
-      "locations": [
-        {
-          "configurationID": "39e7dd20-6e4d-46b0-ae54-c16191a0f591",
-          "name": "Test Location 2",
-          "id": "b3a2b394-11c6-402f-886c-957bab3b2a90",
-          "createdAt": "2025-01-24T17:54:49.350Z",
-          "sensors": []
-        }
-      ]
     }
   ]
 }
