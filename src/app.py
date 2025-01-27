@@ -53,6 +53,7 @@ class DeviceSocketClient:
             "sensor|delete": {"fn": self.config_handler.delete_sensor, "args": ["configurationID", "locationID", "sensorID"]},
         }
         context, operation, data = itemgetter("context", "operation", "data")(cmd)
+        print(context)
         pipe_cmd = f"{context}|{operation}"
         pipeline_fn = cmd_pipline[pipe_cmd]["fn"]
         pipeline_args = cmd_pipline[pipe_cmd]["args"]

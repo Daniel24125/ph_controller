@@ -46,7 +46,7 @@ class Validator:
                 return False
 
         # Additional validation rules
-        if sensor['mode'] not in ['acidic', 'alkaline', "both"]:
+        if sensor['mode'] not in ['acidic', 'alkaline', "auto"]:
             logger.error("Invalid sensor mode")
             return False
         if not (0 < sensor['margin'] <= 1):
@@ -79,7 +79,7 @@ class Validator:
         if not all(field in device_conf for field in required_fields):
             logger.error("Some fields are missing in the device configuraion data")
             return False
-        
+
         return all(self._validate_location(location) for location in device_conf['locations'])
     
 

@@ -17,7 +17,7 @@ class PHController:
             mode: controller mode. Possible values: 
                 acidic: only connects to the acidic pump and only actuates if the pH is above the target pH;
                 alkaline: only connects to the base pump and only actuates if the pH is below the target pH;
-                both: connects to both the acidic and base pumps and actuates if the pH is above or below the target pH;
+                auto: connects to both the acidic and base pumps and actuates if the pH is above or below the target pH;
 
     """
     def __init__(self, acid_pump_pin, base_pump_pin, target_ph, check_interval=5, max_pump_time=30, margin=0.1, mode="acidic"):
@@ -50,8 +50,8 @@ class PHController:
     
     def set_mode(self, mode):
         print(mode)
-        if mode != "acidic" or mode != "alkaline" or mode != "both":
-            raise NameError("You are trying to set the controller mode to an invalid mode. Available options: acidic | alkaline | both")
+        if mode != "acidic" or mode != "alkaline" or mode != "auto":
+            raise NameError("You are trying to set the controller mode to an invalid mode. Available options: acidic | alkaline | auto")
         self.mode = mode
 
     def init_gpio(self):
@@ -73,8 +73,8 @@ class PHController:
 
     def determine_pump(self, current_ph):
         is_acidic = current_ph < self.target_ph ## if the solution is acidic, you need to pump a base solution
-        define_base_pump = self.mode == "alkaline" or self.mode == "both"
-        define_acid_pump = self.mode == "acidic" or self.mode == "both"
+        define_base_pump = self.mode == "alkaline" or self.mode == "auto"
+        define_acid_pump = self.mode == "acidic" or self.mode == "auto"
         if is_acidic and define_base_pump:
             print("Base pump activated!")
             pump_pin = self.base_pump_pin
