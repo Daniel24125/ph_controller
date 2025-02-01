@@ -144,7 +144,7 @@ class DeviceSocketClient:
 
 if __name__ == "__main__": 
     try:
-        socket = DeviceSocketClient(server_url="https://sensormonitorss.onrender.com/")
+        socket = DeviceSocketClient(server_url="http://localhost:8000")
         socket.start()
     except KeyboardInterrupt:
         logger.info("Disconnecting from the server") 
