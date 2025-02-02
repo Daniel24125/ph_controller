@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from config.config_handler import DeviceConfigHandler, Validator
 from operator import itemgetter
 import traceback
+from instruments.experiment import ExperimentHandler
 
 # Load environment variables from .env.local
 env_path = Path('.env.local')
@@ -31,12 +32,21 @@ class DeviceSocketClient:
         self.connected = False
         self.event_handlers_registrations()
         self.validator = Validator()
+        self.experimentHandler = ExperimentHandler(self.sio)
 
     def event_handlers_registrations(self):
         # Register event handlers
         self.sio.on('connect', self._handle_connect)
         self.sio.on('disconnect', self._handle_disconnect)
         self.sio.on('updateDeviceConfig', self._handle_config_update)
+        self.sio.on('command', self._receive_command)
+
+    def _receive_command(self, cmd): 
+        try: 
+            self.experimentHandler.start_experiment(cmd)
+        except Exception as err: 
+            self.report_error(err)
+            
 
     def appy_cmd(self, cmd):
         """Applies the received command after validation"""
@@ -63,7 +73,6 @@ class DeviceSocketClient:
         else: 
             pipeline_fn(data)
 
-
     def _handle_connect(self) -> None:
         """Handle successful connection to server."""
         self.connected = True
@@ -71,6 +80,7 @@ class DeviceSocketClient:
         # Send initial device configuration
         self.sio.emit("register_client", "rpi")
         self.sio.emit("get_rpi_config", self.config_handler.get_config())
+
 
     def _handle_disconnect(self) -> None:
         """Handle disconnection from server."""
@@ -141,6 +151,13 @@ class DeviceSocketClient:
                 logger.error(f"Error in client: {e}")
                 if self.connected:
                     self.disconnect()
+
+    def report_error(self, err): 
+        logger.error(f"An error occured in a device command: {err}")
+        self.sio.emit("error", {
+            "message": f"An error occured in a device command: {err}",
+            "device_id": self.config_handler.get_config()["id"]
+        })
 
 if __name__ == "__main__": 
     try:

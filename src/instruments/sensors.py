@@ -17,7 +17,6 @@ class PhSensor():
         Class associated with the pH sensor registration. 
     """
 
-    
     def __init__(self, rpi_socket, analog):
         
         self.invert = True

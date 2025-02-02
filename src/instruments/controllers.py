@@ -1,8 +1,16 @@
 import time
+
+import sys 
+from pathlib import Path
+
+# Add parent directory to Python path
+sys.path.append(str(Path(__file__).parent.parent))
+
 try:
     import RPi.GPIO as GPIO
 except ImportError:
-    from utils.mock_gpio import GPIO
+    from utils.mock_gpio import MockGPIO 
+    GPIO = MockGPIO()
 
 class PHController:
     """
@@ -20,21 +28,22 @@ class PHController:
                 auto: connects to both the acidic and base pumps and actuates if the pH is above or below the target pH;
 
     """
-    def __init__(self, acid_pump_pin, base_pump_pin, target_ph, check_interval=5, max_pump_time=30, margin=0.1, mode="acidic"):
-        self.acid_pump_pin = acid_pump_pin
-        self.base_pump_pin = base_pump_pin
+    def __init__(self, probe_port, valve_port, target_ph, check_interval=5, max_pump_time=30, margin=0.1, mode="acidic"):
+        self.probe_port = probe_port
+        self.valve_port = valve_port
         self.target_ph = target_ph
         self.check_interval = check_interval
         self.max_pump_time = max_pump_time
         self.margin = margin
         self.mode = mode
+        self.is_running = False
         self.init_gpio()
 
-    def set_acid_pump_pin(self, pin):
-        self.acid_pump_pin = pin
+    def set_probe_port(self, pin):
+        self.probe_port = pin
 
-    def set_base_pump_pin(self, pin):
-        self.base_pump_pin = pin
+    def set_valve_port(self, pin):
+        self.valve_port = pin
 
     def set_target_ph(self, ph):
         self.target_ph = ph
@@ -55,10 +64,10 @@ class PHController:
         self.mode = mode
 
     def init_gpio(self):
+        
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.acid_pump_pin, GPIO.OUT)
-        GPIO.setup(self.base_pump_pin, GPIO.OUT)
-
+        GPIO.setup(self.probe_port, GPIO.OUT)
+        GPIO.setup(self.valve_port, GPIO.OUT)
 
     def read_ph(self):
         # This method should be implemented to read pH from your sensor
@@ -80,7 +89,7 @@ class PHController:
             pump_pin = self.base_pump_pin
         elif not is_acidic and define_acid_pump:
             print("Acidic pump activated!")
-            pump_pin = self.acid_pump_pin
+            # pump_pin = self.acid_pump_pin
         else:
             return  # pH is at target, no adjustment needed
         return pump_pin
@@ -90,12 +99,12 @@ class PHController:
         if self.target_ph - self.margin <= current_ph <= self.target_ph + self.margin:
             print("pH value with the margin values. No adjustment necessary")
             return
-        pump_pin = self.determine_pump(current_ph)
-        if not pump_pin: 
-            return 
+        # pump_pin = self.determine_pump(current_ph)
+        # if not pump_pin: 
+        #     return 
         pump_time = self.calculate_pump_time(current_ph)
         print(f"Pumping for {pump_time} seconds")
-        self.actviate_pump(pump_pin, pump_time)
+        self.actviate_pump(self.valve_port, pump_time)
 
     def actviate_pump(self, pump_pin, pump_time):
         GPIO.output(pump_pin, GPIO.HIGH)
@@ -105,18 +114,26 @@ class PHController:
     def run(self):
         print("Running the pH Controller")
         try:
-            while True:
+            while self.is_running:
                 self.adjust_ph()
                 time.sleep(self.check_interval)
-        except KeyboardInterrupt:
+        except Exception as err:
+            print(err)
             GPIO.cleanup()
             print("Operation aborted by the user...")
 
-if __name__ == "__main__":
-    # Usage example:
-    controller = PHController(acid_pump_pin=17, base_pump_pin=18, target_ph=7.0)
-    try: 
-        controller.set_mode("acidic")
-    except NameError as err:
+    def stop(self): 
+        self.is_running = True
         GPIO.cleanup()
-        print("An error occured: ", err)
+        print("Monitorization stopped")
+
+
+if __name__ == "__main__":
+    pass
+    # # Usage example:
+    # controller = PHController(acid_pump_pin=17, base_pump_pin=18, target_ph=7.0)
+    # try: 
+    #     controller.set_mode("acidic")
+    # except NameError as err:
+    #     GPIO.cleanup()
+    #     print("An error occured: ", err)

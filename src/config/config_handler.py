@@ -65,6 +65,9 @@ class DeviceConfigHandler:
         """Get current configuration."""
         return self.config
 
+    def get_configuration_by_id(self, configurationID): 
+        return [x for x in self.config["configurations"] if x["id"] == configurationID]
+
     def parse_updated_info(self, info, forbidden_keys):
         """Parses data received to be applied into the config file."""
         for key in forbidden_keys: 

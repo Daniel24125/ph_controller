@@ -11,7 +11,7 @@
       "locations": [
         {
           "configurationID": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
-          "name": "Single pH monitor",
+          "name": "L1",
           "id": "7f414523-2893-400d-85ed-c8ff467b5fce",
           "createdAt": "2025-01-27T13:25:59.393Z",
           "sensors": [
@@ -30,7 +30,45 @@
               "sensorID": "d32431eb-c15d-46d0-aaa0-81264cc6fe2a",
               "lastUpdatedAt": "2025-01-27T17:53:32.559Z"
             }
+          ],
+          "locationID": "7f414523-2893-400d-85ed-c8ff467b5fce",
+          "lastUpdatedAt": "2025-02-02T17:21:36.798Z"
+        },
+        {
+          "configurationID": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
+          "name": "L2",
+          "id": "5f0f56f7-fdf4-40d7-b10f-96acb9c68974",
+          "createdAt": "2025-02-02T17:21:15.007Z",
+          "sensors": [
+            {
+              "mode": "acidic",
+              "margin": 0.1,
+              "maxValveTimeOpen": 30,
+              "targetPh": 7,
+              "probePort": 17,
+              "valvePort": 18,
+              "checkInterval": 10,
+              "configurationID": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
+              "locationID": "5f0f56f7-fdf4-40d7-b10f-96acb9c68974",
+              "id": "92514b29-0e54-414f-a56b-8212379368f1",
+              "createdAt": "2025-02-02T17:22:24.637Z"
+            }
           ]
+        },
+        {
+          "configurationID": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
+          "name": "L3",
+          "id": "28bf86ea-be95-4db6-8d82-23d7f140555a",
+          "createdAt": "2025-02-02T17:24:48.391Z",
+          "sensors": [],
+          "locationID": "5f0f56f7-fdf4-40d7-b10f-96acb9c68974"
+        },
+        {
+          "configurationID": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
+          "name": "L4",
+          "id": "c487cf54-3877-4ba4-bf98-921b47195a2d",
+          "createdAt": "2025-02-02T17:26:28.383Z",
+          "sensors": []
         }
       ],
       "lastUpdatedAt": "2025-01-24T14:17:06.732Z"

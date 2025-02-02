@@ -33,6 +33,7 @@ class Validator:
             'maxValveTimeOpen': (int, float),
             'targetPh': (int, float),
             'probePort': int,
+            'valvePort': int,
             'checkInterval': (int, float),
             'createdAt': str
         }
@@ -82,7 +83,6 @@ class Validator:
 
         return all(self._validate_location(location) for location in device_conf['locations'])
     
-
     def _validate_config(self, config) -> bool:
         """Validate the complete configuration structure."""
         try:
