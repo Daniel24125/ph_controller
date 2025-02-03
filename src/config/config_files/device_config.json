@@ -11,7 +11,7 @@
       "locations": [
         {
           "configurationID": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
-          "name": "Single pH monitor",
+          "name": "L1",
           "id": "7f414523-2893-400d-85ed-c8ff467b5fce",
           "createdAt": "2025-01-27T13:25:59.393Z",
           "sensors": [
@@ -30,7 +30,9 @@
               "sensorID": "d32431eb-c15d-46d0-aaa0-81264cc6fe2a",
               "lastUpdatedAt": "2025-01-27T17:53:32.559Z"
             }
-          ]
+          ],
+          "locationID": "7f414523-2893-400d-85ed-c8ff467b5fce",
+          "lastUpdatedAt": "2025-01-30T13:09:02.357Z"
         }
       ],
       "lastUpdatedAt": "2025-01-24T14:17:06.732Z"

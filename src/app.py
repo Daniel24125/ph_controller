@@ -8,6 +8,9 @@ from dotenv import load_dotenv
 from config.config_handler import DeviceConfigHandler, Validator
 from operator import itemgetter
 import traceback
+import sys
+import signal
+
 
 # Load environment variables from .env.local
 env_path = Path('.env.local')
@@ -19,24 +22,41 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+sio = socketio.Client()
+
+
+def signal_handler( sig, frame):
+    print("\nShutting down gracefully...")
+    cleanup()
+    
+def cleanup():
+    if sio.connected:
+        sio.disconnect()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM,signal_handler)
+
+
 class DeviceSocketClient:
 
     def __init__(
         self, 
         server_url: str = None
     ):
-        self.sio = socketio.Client()
+       
         self.server_url = server_url or os.getenv('SOCKET_SERVER_URL')
         self.config_handler = DeviceConfigHandler()
         self.connected = False
+         # Set up signal handlers
         self.event_handlers_registrations()
         self.validator = Validator()
 
     def event_handlers_registrations(self):
         # Register event handlers
-        self.sio.on('connect', self._handle_connect)
-        self.sio.on('disconnect', self._handle_disconnect)
-        self.sio.on('updateDeviceConfig', self._handle_config_update)
+        sio.on('connect', self._handle_connect)
+        sio.on('disconnect', self._handle_disconnect)
+        sio.on('updateDeviceConfig', self._handle_config_update)
 
     def appy_cmd(self, cmd):
         """Applies the received command after validation"""
@@ -53,7 +73,7 @@ class DeviceSocketClient:
             "sensor|delete": {"fn": self.config_handler.delete_sensor, "args": ["configurationID", "locationID", "sensorID"]},
         }
         context, operation, data = itemgetter("context", "operation", "data")(cmd)
-        print(context)
+
         pipe_cmd = f"{context}|{operation}"
         pipeline_fn = cmd_pipline[pipe_cmd]["fn"]
         pipeline_args = cmd_pipline[pipe_cmd]["args"]
@@ -69,8 +89,8 @@ class DeviceSocketClient:
         self.connected = True
         logger.info(f"Connected to server: {self.server_url}")
         # Send initial device configuration
-        self.sio.emit("register_client", "rpi")
-        self.sio.emit("get_rpi_config", self.config_handler.get_config())
+        sio.emit("register_client", "rpi")
+        sio.emit("get_rpi_config", self.config_handler.get_config())
 
     def _handle_disconnect(self) -> None:
         """Handle disconnection from server."""
@@ -98,11 +118,11 @@ class DeviceSocketClient:
             logger.info(f"Received config update: {cmd}")
             self.validator.validateConfigOperationCommand(cmd)
             self.appy_cmd(cmd)
-            self.sio.emit("refresh_device_data", self.config_handler.get_config())
+            sio.emit("refresh_device_data", self.config_handler.get_config())
         except Exception as e:
             logger.error(traceback.format_exc())
             logger.error(f"Error handling config update: {e}")
-            self.sio.emit('error', {
+            sio.emit('error', {
                 'message': str(e),
                 'device_id': self.config_handler.get_config().get('id')
             })
@@ -111,7 +131,7 @@ class DeviceSocketClient:
         """Send sensor data to server."""
         if self.connected:
             print("Send data")
-            # self.sio.emit('sensorData', {
+            # sio.emit('sensorData', {
             #     'device_id': self.config_handler.get_config().get('device_id'),
             #     'data': sensor_data
             # })
@@ -121,26 +141,27 @@ class DeviceSocketClient:
     def connect(self) -> None:
         """Connect to the Socket.IO server."""
         try:
-            self.sio.connect(self.server_url)
+            sio.connect(self.server_url)
         except Exception as e:
             logger.error(f"Connection error: {e}")
 
     def disconnect(self) -> None:
         """Disconnect from the Socket.IO server."""
         if self.connected:
-            self.sio.disconnect()
-
+            sio.disconnect()
+    
+  
     def start(self) -> None:
         """Start the Socket.IO client with automatic reconnection."""
         while True:
             try:
                 if not self.connected:
                     self.connect()
-                self.sio.wait()
+                sio.sleep(1)
             except Exception as e:
                 logger.error(f"Error in client: {e}")
                 if self.connected:
-                    self.disconnect()
+                    cleanup()
 
 if __name__ == "__main__": 
     try:
@@ -148,4 +169,4 @@ if __name__ == "__main__":
         socket.start()
     except KeyboardInterrupt:
         logger.info("Disconnecting from the server") 
-        socket.disconnect()
+        socket.cleanup()
