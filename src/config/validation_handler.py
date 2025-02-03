@@ -32,8 +32,8 @@ class Validator:
             'margin': (int, float),
             'maxValveTimeOpen': (int, float),
             'targetPh': (int, float),
-            'probePort': int,
-            'valvePort': int,
+            'probePort': (int, str),
+            'valvePort': (int, str),
             'checkInterval': (int, float),
             'createdAt': str
         }

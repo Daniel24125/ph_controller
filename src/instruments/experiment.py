@@ -27,7 +27,8 @@ class ExperimentHandler:
     def initiate_sensors(self, configurationID): 
         conf = self.device_handler.get_configuration_by_id(configurationID)
         if len(conf) != 1:
-            print("ERROR No config or more than one config found") 
+            raise FileNotFoundError("No config or more than one config found") 
+        
         locations = conf[0]["locations"]
         for loc in locations: 
             sensor = loc["sensors"][0]

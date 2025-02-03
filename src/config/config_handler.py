@@ -146,6 +146,7 @@ class DeviceConfigHandler:
         return True
 
     def add_sensor(self, data, configurationID, locationID):
+        print(data, configurationID, locationID)
         if not self.validator._validate_sensor(data): 
             self.report_error("The sensor information submited does not contain the correct fields")
         for i, conf in enumerate(self.config["configurations"]): 
@@ -160,6 +161,7 @@ class DeviceConfigHandler:
         if not self.validator._validate_sensor(data):
             logger.error("The sensor information submited does not contain the correct fields")
             self.report_error("The sensor information submited does not contain the correct fields")
+        
         parsedInfo = self.parse_updated_info(data, forbidden_keys_sensor_info)
         for i, conf in enumerate(self.config["configurations"]): 
             if conf["id"] == configurationID:

@@ -12,8 +12,8 @@
         {
           "configurationID": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
           "name": "L1",
-          "id": "7f414523-2893-400d-85ed-c8ff467b5fce",
-          "createdAt": "2025-01-27T13:25:59.393Z",
+          "id": "531f68c4-36b9-4c96-9f2b-39a35520612b",
+          "createdAt": "2025-02-03T14:11:29.190Z",
           "sensors": [
             {
               "mode": "acidic",
@@ -24,15 +24,35 @@
               "valvePort": 18,
               "checkInterval": 10,
               "configurationID": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
-              "locationID": "7f414523-2893-400d-85ed-c8ff467b5fce",
-              "id": "d32431eb-c15d-46d0-aaa0-81264cc6fe2a",
-              "createdAt": "2025-01-27T15:49:38.925Z",
-              "sensorID": "d32431eb-c15d-46d0-aaa0-81264cc6fe2a",
-              "lastUpdatedAt": "2025-01-27T17:53:32.559Z"
+              "locationID": "531f68c4-36b9-4c96-9f2b-39a35520612b",
+              "id": "3463b9b0-41ec-402d-955f-e754e71d2cd9",
+              "createdAt": "2025-02-03T14:11:37.789Z"
+            }
+          ]
+        },
+        {
+          "configurationID": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
+          "name": "L2",
+          "id": "c7d18fb0-9504-4053-ad06-dc0be4b3ea9e",
+          "createdAt": "2025-02-03T14:11:43.485Z",
+          "sensors": [
+            {
+              "mode": "acidic",
+              "margin": 0.1,
+              "maxValveTimeOpen": 30,
+              "targetPh": 7,
+              "probePort": "19",
+              "valvePort": "20",
+              "checkInterval": 10,
+              "configurationID": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
+              "locationID": "c7d18fb0-9504-4053-ad06-dc0be4b3ea9e",
+              "id": "64004ac7-e485-45d5-9fb5-18a85fee37e4",
+              "createdAt": "2025-02-03T14:11:48.608Z",
+              "sensorID": "64004ac7-e485-45d5-9fb5-18a85fee37e4",
+              "lastUpdatedAt": "2025-02-03T14:21:21.119Z"
             }
           ],
-          "locationID": "7f414523-2893-400d-85ed-c8ff467b5fce",
-          "lastUpdatedAt": "2025-01-30T13:09:02.357Z"
+          "locationID": "531f68c4-36b9-4c96-9f2b-39a35520612b"
         }
       ],
       "lastUpdatedAt": "2025-01-24T14:17:06.732Z"
