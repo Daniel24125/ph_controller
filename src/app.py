@@ -1,6 +1,5 @@
 
 import socketio
-import logging
 from typing import Dict, Any
 from pathlib import Path
 import os
@@ -10,18 +9,13 @@ from operator import itemgetter
 import traceback
 import sys
 import signal
-
 from instruments.experiment import ExperimentHandler
+from utils.logger import logger
 
 # Load environment variables from .env.local
 env_path = Path('.env.local')
 load_dotenv(dotenv_path=env_path)
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 sio = socketio.Client()
 
@@ -41,10 +35,7 @@ signal.signal(signal.SIGTERM,signal_handler)
 
 class DeviceSocketClient:
 
-    def __init__(
-        self, 
-        server_url: str = None
-    ):
+    def __init__(self,server_url: str = None):
        
         self.server_url = server_url or os.getenv('SOCKET_SERVER_URL')
         self.config_handler = DeviceConfigHandler()
@@ -52,7 +43,7 @@ class DeviceSocketClient:
          # Set up signal handlers
         self.event_handlers_registrations()
         self.validator = Validator()
-        self.experimentHandler = ExperimentHandler(self.sio)
+        self.experimentHandler = ExperimentHandler(sio)
 
     def event_handlers_registrations(self):
         # Register event handlers

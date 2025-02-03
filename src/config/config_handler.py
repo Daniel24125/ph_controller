@@ -22,7 +22,7 @@ forbidden_keys_sensor_info = ["id", "createdAt"]
 
 
 class DeviceConfigHandler:
-    def __init__(self, config_path: str = 'src/config/config_files/device_config.json'):
+    def __init__(self, config_path: str ="src/config/config_files/device_config.json"):
         self.config_path = Path(config_path)
         self.config = self._load_config()
         self.validator = Validator()
