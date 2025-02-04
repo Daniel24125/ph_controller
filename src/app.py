@@ -36,7 +36,6 @@ signal.signal(signal.SIGTERM,signal_handler)
 class DeviceSocketClient:
 
     def __init__(self,server_url: str = None):
-       
         self.server_url = server_url or os.getenv('SOCKET_SERVER_URL')
         self.config_handler = DeviceConfigHandler()
         self.connected = False
@@ -45,6 +44,15 @@ class DeviceSocketClient:
         self.validator = Validator()
         self.experimentHandler = ExperimentHandler(sio)
 
+    def parseCommands(self, command_data): 
+        if "data" not in command_data or "cmd" not in command_data: 
+            raise ValueError("Command data with the wrong format") 
+        commands = {
+            "startExperiment": self.experimentHandler.start_experiment,
+            "stopExperiment": self.experimentHandler.stop_experiment
+        }
+        commands[command_data["cmd"]](command_data["data"])
+
     def event_handlers_registrations(self):
         # Register event handlers
         sio.on('connect', self._handle_connect)
@@ -52,9 +60,10 @@ class DeviceSocketClient:
         sio.on('updateDeviceConfig', self._handle_config_update)
         sio.on('command', self._receive_command)
 
-    def _receive_command(self, cmd): 
+    def _receive_command(self, command_data): 
+        logger.info(f"Command received: {command_data}")
         try: 
-            self.experimentHandler.start_experiment(cmd)
+            self.parseCommands(command_data)
         except Exception as err: 
             self.report_error(err)
             
@@ -166,7 +175,7 @@ class DeviceSocketClient:
 
     def report_error(self, err): 
         logger.error(f"An error occured in a device command: {err}")
-        self.sio.emit("error", {
+        sio.emit("error", {
             "message": f"An error occured in a device command: {err}",
             "device_id": self.config_handler.get_config()["id"]
         })
