@@ -113,6 +113,7 @@ class PHController:
 
     def run(self):
         print("Running the pH Controller")
+        self.is_running = True
         try:
             while self.is_running:
                 self.adjust_ph()
@@ -120,13 +121,65 @@ class PHController:
         except Exception as err:
             print(err)
             GPIO.cleanup()
-            print("Operation aborted by the user...")
+            print("Operation aborted...")
 
     def stop(self): 
-        self.is_running = True
+        self.is_running = False
         GPIO.cleanup()
         print("Monitorization stopped")
 
+
+
+class SensorManager: 
+    def __init__(self, send_data):
+        self.send_data = send_data
+        self.controllers = []
+        self.is_running = False
+
+    def register_sensors(self, locations): 
+        for loc in locations:
+            sensor = loc["sensors"][0]
+            controler = {
+                "location": loc,
+                "controler": PHController(
+                    probe_port=sensor["probePort"],
+                    valve_port=sensor["valvePort"],
+                    target_ph=sensor["targetPh"],
+                    check_interval=2, 
+                    max_pump_time=sensor["maxValveTimeOpen"],
+                    margin=sensor["margin"],
+                    mode=sensor["mode"]
+                )  
+            }
+            self.controllers.append(controler)
+    
+    def run_controllers(self, dataAquisitionInterval): 
+        self.is_running = True
+        try:
+            while self.is_running:
+                send_data = []
+                for con in self.controllers: 
+                    controler = con["controler"]
+                    read = controler.read_ph()
+                    send_data.append({
+                        "id": con["location"]["id"],
+                        "y": read
+                    })
+                    controler.adjust_ph()
+                self.send_data(send_data)
+                print(send_data)
+                
+                time.sleep(dataAquisitionInterval)
+        except Exception as err:
+            print(err)
+            GPIO.cleanup()
+            print("Operation aborted by the user...")
+        
+
+    def stop_controllers(self): 
+        self.is_running = False
+        GPIO.cleanup()
+        print("Monitorization stopped")
 
 if __name__ == "__main__":
     pass
