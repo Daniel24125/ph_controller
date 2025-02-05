@@ -67,7 +67,6 @@ class DeviceSocketClient:
         except Exception as err: 
             self.report_error(err)
             
-
     def appy_cmd(self, cmd):
         """Applies the received command after validation"""
         cmd_pipline={
@@ -100,7 +99,6 @@ class DeviceSocketClient:
         # Send initial device configuration
         sio.emit("register_client", "rpi")
         sio.emit("get_rpi_config", self.config_handler.get_config())
-
 
     def _handle_disconnect(self) -> None:
         """Handle disconnection from server."""
@@ -137,17 +135,6 @@ class DeviceSocketClient:
                 'device_id': self.config_handler.get_config().get('id')
             })
 
-    def send_sensor_data(self, sensor_data: Dict[str, Any]) -> None:
-        """Send sensor data to server."""
-        if self.connected:
-            print("Send data")
-            # sio.emit('sensorData', {
-            #     'device_id': self.config_handler.get_config().get('device_id'),
-            #     'data': sensor_data
-            # })
-        else:
-            logger.warning("Not connected to server. Cannot send sensor data.")
-
     def connect(self) -> None:
         """Connect to the Socket.IO server."""
         try:
@@ -160,7 +147,6 @@ class DeviceSocketClient:
         if self.connected:
             sio.disconnect()
     
-  
     def start(self) -> None:
         """Start the Socket.IO client with automatic reconnection."""
         while True:

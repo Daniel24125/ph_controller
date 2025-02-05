@@ -12,6 +12,8 @@ except ImportError:
     from utils.mock_gpio import MockGPIO 
     GPIO = MockGPIO()
 
+from utils.utils import IncrementalRandomGenerator
+
 class PHController:
     """
         PHController class to monitor and control the pH of an aquous solution
@@ -37,6 +39,8 @@ class PHController:
         self.margin = margin
         self.mode = mode
         self.is_running = False
+        self.is_pumping = False
+        self.random_gen = IncrementalRandomGenerator(1,12,0.1)
         self.init_gpio()
 
     def set_probe_port(self, pin):
@@ -72,7 +76,7 @@ class PHController:
     def read_ph(self):
         # This method should be implemented to read pH from your sensor
         # For now, we'll use a placeholder
-        return 7.15
+        return self.random_gen.get_next()
 
     def calculate_pump_time(self, current_ph):
         ph_difference = abs(self.target_ph - current_ph)
@@ -103,13 +107,17 @@ class PHController:
         # if not pump_pin: 
         #     return 
         pump_time = self.calculate_pump_time(current_ph)
-        print(f"Pumping for {pump_time} seconds")
-        self.actviate_pump(self.valve_port, pump_time)
+        t = threading.Thread(target=self.actviate_pump, args=(self.valve_port, pump_time))
+        t.start()
 
     def actviate_pump(self, pump_pin, pump_time):
-        GPIO.output(pump_pin, GPIO.HIGH)
-        time.sleep(pump_time)
-        GPIO.output(pump_pin, GPIO.LOW)
+        if not self.is_pumping:
+            self.is_pumping = True
+            print(f"Pumping for {pump_time} seconds")
+            GPIO.output(pump_pin, GPIO.HIGH)
+            time.sleep(pump_time)
+            GPIO.output(pump_pin, GPIO.LOW)
+            self.is_pumping = False
 
     def run(self):
         print("Running the pH Controller")

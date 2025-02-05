@@ -58,7 +58,7 @@ class MockGPIO:
                 self._pin_states[channel] = self.HIGH
             else:
                 self._pin_states[channel] = self.LOW
-        print(f"Setup GPIO {channel} as {direction}")
+        # print(f"Setup GPIO {channel} as {direction}")
     
     def output(self, channel, state):
         """Set output state of GPIO channel(s)."""
