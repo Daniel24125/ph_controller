@@ -43,7 +43,7 @@ class ExperimentHandler:
             raise FileNotFoundError("No config or more than one config found") 
         locations = conf[0]["locations"]
         self.sensor_manager.register_sensors(locations=locations)
-        self.sensor_manager.run_controllers(dataAquisitionInterval=data["dataAquisitionInterval"])
+        self.sensor_manager.start(dataAquisitionInterval=data["dataAquisitionInterval"])
        
 
     def initiate_experiment_timer(self):

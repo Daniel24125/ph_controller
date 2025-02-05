@@ -7,12 +7,14 @@ class IntervalTimer:
         self.thread = None
     
     def start(self, interval, callback):
+        print("Starting the Timer")
         self.running = True
         self.thread = threading.Thread(target=self._run_interval, args=(interval, callback))
         self.thread.start()
     
     def stop(self):
         self.running = False
+        print("Stopping the Timer")
         if self.thread:
             self.thread.join()
     

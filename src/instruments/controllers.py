@@ -2,7 +2,7 @@ import time
 
 import sys 
 from pathlib import Path
-
+import threading
 # Add parent directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -137,6 +137,7 @@ class SensorManager:
         self.is_running = False
 
     def register_sensors(self, locations): 
+        
         for loc in locations:
             sensor = loc["sensors"][0]
             controler = {
@@ -153,8 +154,13 @@ class SensorManager:
             }
             self.controllers.append(controler)
     
-    def run_controllers(self, dataAquisitionInterval): 
+    def start(self, dataAquisitionInterval):
+        print("Starting the Timer")
         self.is_running = True
+        self.thread = threading.Thread(target=self.run_controllers, args=(dataAquisitionInterval,))
+        self.thread.start()
+
+    def run_controllers(self, dataAquisitionInterval): 
         try:
             while self.is_running:
                 send_data = []
@@ -167,7 +173,6 @@ class SensorManager:
                     })
                     controler.adjust_ph()
                 self.send_data(send_data)
-                print(send_data)
                 
                 time.sleep(dataAquisitionInterval)
         except Exception as err:
@@ -178,6 +183,7 @@ class SensorManager:
 
     def stop_controllers(self): 
         self.is_running = False
+        self.controllers = []
         GPIO.cleanup()
         print("Monitorization stopped")
 
