@@ -36,7 +36,6 @@ class ExperimentHandler:
         self.duration = 0
         self.sensor_manager.stop_controllers()
 
-
     def initiate_sensors(self, data): 
         conf = self.device_handler.get_configuration_by_id(data["configurationID"])
         if len(conf) != 1:

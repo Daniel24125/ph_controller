@@ -146,7 +146,10 @@ class DeviceConfigHandler:
         return True
 
     def add_sensor(self, data, configurationID, locationID):
-        print(data, configurationID, locationID)
+        data = {
+            **data, 
+            "targetPh": int(data["targetPh"]) 
+        }
         if not self.validator._validate_sensor(data): 
             self.report_error("The sensor information submited does not contain the correct fields")
         for i, conf in enumerate(self.config["configurations"]): 

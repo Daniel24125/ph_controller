@@ -53,6 +53,27 @@
             }
           ],
           "locationID": "531f68c4-36b9-4c96-9f2b-39a35520612b"
+        },
+        {
+          "configurationID": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
+          "name": "L3",
+          "id": "4d8c4fa5-ca4c-4d92-9aca-78b0dd750419",
+          "createdAt": "2025-02-09T14:03:43.585Z",
+          "sensors": [
+            {
+              "mode": "acidic",
+              "margin": 0.1,
+              "maxValveTimeOpen": 30,
+              "targetPh": 5,
+              "probePort": 17,
+              "valvePort": 18,
+              "checkInterval": 10,
+              "configurationID": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
+              "locationID": "4d8c4fa5-ca4c-4d92-9aca-78b0dd750419",
+              "id": "6733ff05-1242-488d-97c5-ba74565c7465",
+              "createdAt": "2025-02-09T14:06:58.103Z"
+            }
+          ]
         }
       ],
       "lastUpdatedAt": "2025-01-24T14:17:06.732Z"

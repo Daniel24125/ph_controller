@@ -38,6 +38,8 @@ class Validator:
             'createdAt': str
         }
 
+        
+
         for field, field_type in required_fields.items():
             if field not in sensor:
                 logger.error(f"Missing required sensor field: {field}")
