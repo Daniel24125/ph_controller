@@ -49,6 +49,8 @@ class DeviceSocketClient:
             raise ValueError("Command data with the wrong format") 
         commands = {
             "startExperiment": self.experimentHandler.start_experiment,
+            "pauseExperiment": self.experimentHandler.pause_experiment,
+            "resumeExperiment": self.experimentHandler.resume_experiment,
             "stopExperiment": self.experimentHandler.stop_experiment
         }
         commands[command_data["cmd"]](command_data["data"])

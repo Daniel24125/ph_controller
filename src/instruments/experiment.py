@@ -28,7 +28,18 @@ class ExperimentHandler:
     def start_experiment(self, data): 
         logger.info("Starting the experiment")
         self.initiate_sensors(data)
-        self.initiate_experiment_timer()
+        self.start_experiment_timer()
+
+    def pause_experiment(self, data): 
+        logger.info("Pausing the experiment")
+        self.timer.stop()
+        self.sensor_manager.pause_controllers()
+
+    def resume_experiment(self, data): 
+        logger.info("Resuming the experiment")
+        self.start_experiment_timer()
+        self.sensor_manager.start(dataAquisitionInterval=data["dataAquisitionInterval"])
+
 
     def stop_experiment(self, data): 
         logger.info("Stoping the experiment")
@@ -45,7 +56,7 @@ class ExperimentHandler:
         self.sensor_manager.start(dataAquisitionInterval=data["dataAquisitionInterval"])
        
 
-    def initiate_experiment_timer(self):
+    def start_experiment_timer(self):
         self.timer.start(1, self.update_duration)
 
     def update_duration(self): 

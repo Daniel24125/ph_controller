@@ -164,8 +164,10 @@ class SensorManager:
     
     def start(self, dataAquisitionInterval):
         print("Starting the Timer")
+        if not hasattr(self, "dataAquisitionInterval"): 
+            self.dataAquisitionInterval = dataAquisitionInterval
         self.is_running = True
-        self.thread = threading.Thread(target=self.run_controllers, args=(dataAquisitionInterval,))
+        self.thread = threading.Thread(target=self.run_controllers, args=(self.dataAquisitionInterval,))
         self.thread.start()
 
     def run_controllers(self, dataAquisitionInterval): 
@@ -188,6 +190,8 @@ class SensorManager:
             GPIO.cleanup()
             print("Operation aborted by the user...")
         
+    def pause_controllers(self): 
+        self.is_running = False
 
     def stop_controllers(self): 
         self.is_running = False
