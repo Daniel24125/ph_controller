@@ -3,6 +3,9 @@ import time
 import sys 
 from pathlib import Path
 import threading
+import uuid
+import datetime
+
 # Add parent directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -30,7 +33,7 @@ class PHController:
                 auto: connects to both the acidic and base pumps and actuates if the pH is above or below the target pH;
 
     """
-    def __init__(self, probe_port, valve_port, target_ph, check_interval=5, max_pump_time=30, margin=0.1, mode="acidic"):
+    def __init__(self, location, send_log_to_client, probe_port, valve_port, target_ph, check_interval=5, max_pump_time=30, margin=0.1, mode="acidic"):
         self.probe_port = probe_port
         self.valve_port = valve_port
         self.target_ph = target_ph
@@ -40,6 +43,8 @@ class PHController:
         self.mode = mode
         self.is_running = False
         self.is_pumping = False
+        self.send_log_to_client = send_log_to_client
+        self.location = location
         self.random_gen = IncrementalRandomGenerator(1,12,0.1)
         self.init_gpio()
 
@@ -67,8 +72,7 @@ class PHController:
             raise NameError("You are trying to set the controller mode to an invalid mode. Available options: acidic | alkaline | auto")
         self.mode = mode
 
-    def init_gpio(self):
-        
+    def init_gpio(self):  
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.probe_port, GPIO.OUT)
         GPIO.setup(self.valve_port, GPIO.OUT)
@@ -76,7 +80,12 @@ class PHController:
     def read_ph(self):
         # This method should be implemented to read pH from your sensor
         # For now, we'll use a placeholder
-        return self.random_gen.get_next()
+        try: 
+            return self.random_gen.get_next()
+        except Exception as err: 
+            print(err)
+            self.send_log_to_client("error", "An error occured while trying to aquire pH data: {err}", self.location )
+            
 
     def calculate_pump_time(self, current_ph):
         ph_difference = abs(self.target_ph - current_ph)
@@ -113,11 +122,14 @@ class PHController:
     def actviate_pump(self, pump_pin, pump_time):
         if not self.is_pumping:
             self.is_pumping = True
+            self.send_log_to_client("info", f"Openning valve for {pump_time} seconds",self.location )
             print(f"Pumping for {pump_time} seconds")
             GPIO.output(pump_pin, GPIO.HIGH)
             time.sleep(pump_time)
             GPIO.output(pump_pin, GPIO.LOW)
             self.is_pumping = False
+            self.send_log_to_client("info", "Closing valve",self.location )
+
 
     def run(self):
         print("Running the pH Controller")
@@ -130,6 +142,8 @@ class PHController:
             print(err)
             GPIO.cleanup()
             print("Operation aborted...")
+            self.send_log_to_client("error", "An error occured while trying to aquire pH data: {err}",self.location )
+
 
     def stop(self): 
         self.is_running = False
@@ -139,10 +153,11 @@ class PHController:
 
 
 class SensorManager: 
-    def __init__(self, send_data):
+    def __init__(self, socket, send_data):
         self.send_data = send_data
         self.controllers = []
         self.is_running = False
+        self.socket = socket
 
     def register_sensors(self, locations): 
         
@@ -151,6 +166,8 @@ class SensorManager:
             controler = {
                 "location": loc,
                 "controler": PHController(
+                    location=loc["name"],
+                    send_log_to_client=self.send_log_to_client,
                     probe_port=sensor["probePort"],
                     valve_port=sensor["valvePort"],
                     target_ph=sensor["targetPh"],
@@ -189,7 +206,8 @@ class SensorManager:
             print(err)
             GPIO.cleanup()
             print("Operation aborted by the user...")
-        
+            self.send_log_to_client("error", f"An error occured during data aquisition: {err}", "Device")
+           
     def pause_controllers(self): 
         self.is_running = False
 
@@ -198,6 +216,15 @@ class SensorManager:
         self.controllers = []
         GPIO.cleanup()
         print("Monitorization stopped")
+
+    def send_log_to_client(self, type, desc, location): 
+        self.socket.emit("update_experiment_log", {
+            "id":  uuid.uuid4(),
+            "type": type,
+            "desc": desc,
+            "createdAt":  datetime.now().isoformat(),
+            "location": location
+        })
 
 if __name__ == "__main__":
     pass

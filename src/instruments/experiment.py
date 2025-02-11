@@ -1,7 +1,6 @@
 
 import sys 
 from pathlib import Path
-import asyncio
 
 # Add parent directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -20,7 +19,7 @@ class ExperimentHandler:
         self.device = self.device_handler.get_config()
         self.sensors = []
         self.timer = IntervalTimer()
-        self.sensor_manager = SensorManager(self.send_data_to_client)
+        self.sensor_manager = SensorManager(socket, self.send_data_to_client)
        
     def update_socket(self, socket):
         self.socket = socket 
