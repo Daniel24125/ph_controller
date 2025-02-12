@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 import threading
 import uuid
-import datetime
+from datetime import datetime
 
 # Add parent directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -122,8 +122,8 @@ class PHController:
     def actviate_pump(self, pump_pin, pump_time):
         if not self.is_pumping:
             self.is_pumping = True
-            self.send_log_to_client("info", f"Openning valve for {pump_time} seconds",self.location )
-            print(f"Pumping for {pump_time} seconds")
+            self.send_log_to_client("info", f"Openning valve for {round(pump_time,2)} seconds", self.location )
+            print(f"Pumping for {round(pump_time,2)} seconds")
             GPIO.output(pump_pin, GPIO.HIGH)
             time.sleep(pump_time)
             GPIO.output(pump_pin, GPIO.LOW)
@@ -218,13 +218,15 @@ class SensorManager:
         print("Monitorization stopped")
 
     def send_log_to_client(self, type, desc, location): 
-        self.socket.emit("update_experiment_log", {
-            "id":  uuid.uuid4(),
+        print("Sending log to client from location: ", location)
+        log ={
+            # "id": uuid.uuid4(),
             "type": type,
             "desc": desc,
             "createdAt":  datetime.now().isoformat(),
             "location": location
-        })
+        }
+        self.socket.emit("update_experiment_log", log)
 
 if __name__ == "__main__":
     pass
