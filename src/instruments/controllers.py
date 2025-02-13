@@ -14,7 +14,7 @@ except ImportError:
     from utils.mock_gpio import MockGPIO 
     GPIO = MockGPIO()
 
-from utils.utils import IncrementalRandomGenerator
+from utils.utils import IncrementalRandomGenerator, Ana
 
 class PHController:
     """
