@@ -8,7 +8,6 @@ from datetime import datetime
 
 # Add parent directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
-
 try:
     import RPi.GPIO as GPIO
 except ImportError:
@@ -130,7 +129,6 @@ class PHController:
             self.is_pumping = False
             self.send_log_to_client("info", "Closing valve",self.location )
 
-
     def run(self):
         print("Running the pH Controller")
         self.is_running = True
@@ -143,7 +141,6 @@ class PHController:
             GPIO.cleanup()
             print("Operation aborted...")
             self.send_log_to_client("error", "An error occured while trying to aquire pH data: {err}",self.location )
-
 
     def stop(self): 
         self.is_running = False
@@ -230,10 +227,16 @@ class SensorManager:
 
 if __name__ == "__main__":
     pass
-    # # Usage example:
-    # controller = PHController(acid_pump_pin=17, base_pump_pin=18, target_ph=7.0)
-    # try: 
-    #     controller.set_mode("acidic")
-    # except NameError as err:
-    #     GPIO.cleanup()
-    #     print("An error occured: ", err)
+     # Usage example:
+    controller = PHController(
+        location=None, 
+        send_log_to_client=None,
+        probe_port=11, 
+        valve_port=18, 
+        target_ph=7.0, 
+        mode="acidic"
+    )
+    
+    read = controller.read_ph()
+    print(read)
+    

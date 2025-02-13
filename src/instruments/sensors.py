@@ -123,30 +123,7 @@ class PhSensor():
             "volume": volume
         }), namespace="/rpi")
         
-    # This method is responsible for determining the desired pH value based on the 
-    # pH curve defined by the user
-    def check_ph_kinetics(self, digestion_class): 
-        ph_kinetics = digestion_class.target_ph["ph_target_kinetics"]
-        time_kinetics = digestion_class.target_ph["ph_time"]
-        digestion_time = digestion_class.time 
-        self.user_delay =  time_kinetics[1]*60  if ph_kinetics[0]["y"] == ph_kinetics[1]["y"] else 0
-        if digestion_time == 1:     
-            self.i = 1 if self.user_delay == 0 else 2
-            self.delay = self.delay + float(time_kinetics[self.i])*60   
-        self.delay = self.delay - digestion_time
-        self.desired_ph = float(ph_kinetics[self.i]["y"])
-        print(f"pH Delay: {round(self.delay/60, 2)} min; i: {self.i}; Initial desired pH: {self.desired_ph}")
-        if(self.delay > 0):
-            time.sleep(self.delay)
-        threading.Thread(target=self.listen_for_ph, daemon=True, args=(digestion_class,0.1,digestion_class.ph_pumping_time,)).start()          
-        while self.listen_for_adjust_ph: 
-            if float(time_kinetics[self.i])<=float(digestion_class.time)/60: 
-                self.desired_ph = float(ph_kinetics[self.i]["y"])
-                self.i = self.i+1 if self.i < len(time_kinetics) else self.i
-            time_to_wait = (float(time_kinetics[self.i])-float(time_kinetics[self.i-1]))*60
-            print(f"i: {self.i}; Current pH Target: {self.desired_ph}")
-            print(f"Next check in {time_to_wait/60} min")
-            time.sleep(time_to_wait)
+  
         
     # This method is responsible for monitoring the pH value and adjust the pH accordingly
     def listen_for_ph(self,digestion_class, th=0.1, pump_time=1, invert=True, check_time=20): 
