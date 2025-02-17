@@ -14,7 +14,9 @@ except ImportError:
     from utils.mock_gpio import MockGPIO 
     GPIO = MockGPIO()
 
-from utils.utils import IncrementalRandomGenerator, Ana
+from utils.utils import IncrementalRandomGenerator, AnalogCommunication
+from config.config_handler import DeviceInputMappingHandler
+
 
 class PHController:
     """
@@ -30,41 +32,28 @@ class PHController:
                 acidic: only connects to the acidic pump and only actuates if the pH is above the target pH;
                 alkaline: only connects to the base pump and only actuates if the pH is below the target pH;
                 auto: connects to both the acidic and base pumps and actuates if the pH is above or below the target pH;
-
     """
-    def __init__(self, location, send_log_to_client, probe_port, valve_port, target_ph, check_interval=5, max_pump_time=30, margin=0.1, mode="acidic"):
-        self.probe_port = probe_port
-        self.valve_port = valve_port
+    def __init__(self, location, send_log_to_client, device_port, target_ph, max_pump_time=30, margin=0.1, mode="acidic"):
+        self.device_port = device_port
         self.target_ph = target_ph
-        self.check_interval = check_interval
         self.max_pump_time = max_pump_time
         self.margin = margin
         self.mode = mode
-        self.is_running = False
-        self.is_pumping = False
         self.send_log_to_client = send_log_to_client
         self.location = location
         self.random_gen = IncrementalRandomGenerator(1,12,0.1)
-        self.init_gpio()
-
-    def set_probe_port(self, pin):
-        self.probe_port = pin
-
-    def set_valve_port(self, pin):
-        self.valve_port = pin
-
-    def set_target_ph(self, ph):
-        self.target_ph = ph
-
-    def set_check_interval(self, interval):
-        self.check_interval = interval
-
-    def set_max_pump_time(self, time):
-        self.max_pump_time = time
+        self.init_sensor()
+        #self.init_gpio()
     
-    def set_margin(self, ph_margin):
-        self.margin = ph_margin
-    
+    def init_sensor(self): 
+        self.is_running = False
+        self.is_pumping = False
+        self.port_mapper = DeviceInputMappingHandler()
+        self.alkaline_pump_pin, self.acidic_pump_pin = self.port_mapper.get_pump_pins(self.device_port)
+        self.comunicator = AnalogCommunication(
+            sensor_config=self.port_mapper.get_input_number(self.device_port)
+        )
+
     def set_mode(self, mode):
         print(mode)
         if mode != "acidic" or mode != "alkaline" or mode != "auto":
@@ -73,19 +62,17 @@ class PHController:
 
     def init_gpio(self):  
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.probe_port, GPIO.OUT)
-        GPIO.setup(self.valve_port, GPIO.OUT)
+        GPIO.setup(self.alkaline_pump_pin, GPIO.OUT)
+        GPIO.setup(self.acidic_pump_pin, GPIO.OUT)
 
     def read_ph(self):
-        # This method should be implemented to read pH from your sensor
-        # For now, we'll use a placeholder
         try: 
-            return self.random_gen.get_next()
+            #return self.random_gen.get_next()
+            return self.comunicator.get_read()
         except Exception as err: 
             print(err)
             self.send_log_to_client("error", "An error occured while trying to aquire pH data: {err}", self.location )
             
-
     def calculate_pump_time(self, current_ph):
         ph_difference = abs(self.target_ph - current_ph)
         # Scale the pump time based on pH difference, max 10 seconds
@@ -129,19 +116,6 @@ class PHController:
             self.is_pumping = False
             self.send_log_to_client("info", "Closing valve",self.location )
 
-    def run(self):
-        print("Running the pH Controller")
-        self.is_running = True
-        try:
-            while self.is_running:
-                self.adjust_ph()
-                time.sleep(self.check_interval)
-        except Exception as err:
-            print(err)
-            GPIO.cleanup()
-            print("Operation aborted...")
-            self.send_log_to_client("error", "An error occured while trying to aquire pH data: {err}",self.location )
-
     def stop(self): 
         self.is_running = False
         GPIO.cleanup()
@@ -165,10 +139,8 @@ class SensorManager:
                 "controler": PHController(
                     location=loc["name"],
                     send_log_to_client=self.send_log_to_client,
-                    probe_port=sensor["probePort"],
-                    valve_port=sensor["valvePort"],
+                    device_port=sensor["devicePort"],
                     target_ph=sensor["targetPh"],
-                    check_interval=2, 
                     max_pump_time=sensor["maxValveTimeOpen"],
                     margin=sensor["margin"],
                     mode=sensor["mode"]
@@ -228,15 +200,17 @@ class SensorManager:
 if __name__ == "__main__":
     pass
      # Usage example:
+    probe = "i4"
     controller = PHController(
         location=None, 
         send_log_to_client=None,
-        probe_port=11, 
-        valve_port=18, 
+        device_port=probe, 
         target_ph=7.0, 
         mode="acidic"
     )
     
     read = controller.read_ph()
     print(read)
+    
+    #controller.port_mapper.set_calibration_value(probe, "acidic_value", read)
     

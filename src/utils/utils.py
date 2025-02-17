@@ -9,8 +9,10 @@ import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 import busio
 import board 
-# from scipy import stats
+from scipy import stats
 import random 
+
+port_map = [ADS.P0, ADS.P1, ADS.P2, ADS.P3]
 
 def get_config():
     try:
@@ -24,19 +26,20 @@ class AnalogCommunication:
         This class is responsible for establishing an analog connection with de ADS1115 converter.
     """
 
-    def __init__(self,port=ADS.P3):
+    def __init__(self, sensor_config):
         self.listen = True
         self.error = False
-        self.port= port
+        self.sensor_config = sensor_config
         self.analog_read = 0
         self.converted_read = 0
         self.ready = True
    
    
-    def get_regression_params(self, term): 
+    def get_regression_params(self): 
         try:
-            x = np.array(list(self.config[term]["active"].keys())).astype(np.float64)
-            y = np.array(list(self.config[term]["active"].values())).astype(np.float64)
+
+            x = np.array([self.sensor_config["acidic_value"], self.sensor_config["alkaline_value"]]).astype(np.float64)
+            y = np.array([4,7]).astype(np.float64)
             cal = stats.linregress(x,y)
             return (cal.slope, cal.intercept)
         except Exception as err: 
@@ -50,7 +53,7 @@ class AnalogCommunication:
         for i in range(NUM_MEAS_FOR_AVG):
             try: 
                 i2c = busio.I2C(board.SCL, board.SDA)
-                an_read = AnalogIn(ADS.ADS1115(i2c), self.port).value
+                an_read = AnalogIn(ADS.ADS1115(i2c), self.sensor_config["probe"]).value
                 analog_values[i] = an_read
             except Exception as err: 
                 # print("Error on get_read")
@@ -59,16 +62,13 @@ class AnalogCommunication:
                 pass
         mask = np.ma.masked_equal(analog_values,0).compressed()
         analog_avg = np.average(mask)
-        #converted = np.average(converted_values)
-        #converted_sd = np.std(converted_values) 
         self.ready=True
-        #return (analog_avg, np.std(mask), converted,converted_sd)
-        return analog_avg
+        return self.convert_analog(analog_avg)
     
     # This method is responsible for converting the analog read to the pH value according to the sensors' calibration curve
-    def convert_analog(self, analog_read, sensor):
-        m,b=self.get_regression_params(sensor)
-        return round((analog_read-b)/m, 2)
+    def convert_analog(self, analog_read):
+        m,b=self.get_regression_params()
+        return round(analog_read*m+b, 2)
             
     # this method is responsible for updating the classes' current values for the pH sensor
     def update_current_values(self): 

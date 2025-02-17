@@ -3,8 +3,8 @@
     "probe": 0,
     "acidic": 9,
     "alkaline": 11,
-    "acidic_value": 16000,
-    "alkaline_value": 16000
+    "acidic_value": 0,
+    "alkaline_value": 0
   },
   "i2": {
     "probe": 1,
@@ -24,12 +24,7 @@
     "probe": 3,
     "acidic": 19,
     "alkaline": 21,
-    "acidic_value": 0,
-    "alkaline_value": 0
-  },
-  "probe": 0,
-  "acidic": 9,
-  "alkaline": 11,
-  "acidic_value": 16000,
-  "alkaline_value": 16000
+    "acidic_value": 4340.8,
+    "alkaline_value": 15076.8
+  }
 }

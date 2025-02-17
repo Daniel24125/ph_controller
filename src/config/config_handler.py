@@ -240,28 +240,40 @@ class DeviceInputMappingHandler(ConfigHandler):
         }
         self.config = self._load_file()
 
+    def get_probe_pin(self, input_number): 
+        return self.get_sensor_key(input_number,"probe")
+
     def get_pump_pins(self, input_number): 
-        if not input_number in self.config: 
-            raise ValueError("There is no input number configurtion for the provided input")
-        config = self.config[input_number]
+        config=self.get_input_number(input_number)
         return (config["acidic"], config["alkaline"])
 
     def set_calibration_value(self, input_number, value_channel, value):
-        if not input_number in self.config: 
-            raise ValueError("There is no input number configurtion for the provided input")
-        config = self.config[input_number]
-        if not value_channel in config: 
-            raise ValueError("You are trying to set the value of an unknown channel")
+        config = self.get_input_number(input_number)
+        self.get_sensor_key(input_number, value_channel)
         config[value_channel] = value
         self._save_config({
             **self.config,
-            **config
-            })
+            input_number: config
+        })
 
+    def get_input_number(self, input_number):
+        if not input_number in self.config: 
+            raise ValueError("There is no input number configurtion for the provided input")
+        return self.config[input_number]
+
+    def get_sensor_key(self, input_number, key): 
+        config = self.get_input_number(input_number)
+        if not key in config: 
+            raise ValueError("You are trying to access the value of an unknown key")
+        return config[key]
 
 
 if __name__ == "__main__":
-    config = DeviceInputMappingHandler()
-    acidic, alkaline = config.get_pump_pins("i1")
-    config.set_calibration_value("i1", "alkaline_value", 16000)
-    print(config.config)
+    try:
+        config = DeviceInputMappingHandler()
+        pin = config.get_probe_pin("i1")
+        config.set_calibration_value("i1", "acidic_value", 25000)
+        print(pin)
+    except Exception as err: 
+        print(err)
+ 
