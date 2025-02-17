@@ -1,0 +1,22 @@
+{
+  "i1": {
+    "probe": 0,
+    "acidic": 9,
+    "alkaline": 11
+  },
+  "i2": {
+    "probe": 1,
+    "acidic": 13,
+    "alkaline": 15
+  },
+  "i3": {
+    "probe": 2,
+    "acidic": 16,
+    "alkaline": 18
+  },
+  "i4": {
+    "probe": 3,
+    "acidic": 19,
+    "alkaline": 21
+  }
+}

@@ -25,7 +25,6 @@ class AnalogCommunication:
     """
 
     def __init__(self,port=ADS.P3):
-        #self.config  = get_config()
         self.listen = True
         self.error = False
         self.port= port
