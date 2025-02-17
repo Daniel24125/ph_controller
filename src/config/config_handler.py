@@ -40,7 +40,7 @@ class ConfigHandler():
 
     def get_config(self) -> Dict[str, Any]:
         """Get current configuration."""
-        return self.config
+        return self.config if hasattr(self, "config") else self._default_config
 
     def _load_file(self) -> Dict[str, Any]:
         """Load device configuration from file."""
@@ -50,7 +50,7 @@ class ConfigHandler():
                     return json.load(f)
             else:
                 self._save_config(self._default_config)
-                return _default_config
+                return self._default_config
         except Exception as e:
             logger.error(f"Error loading config: {e}")
             return {}
@@ -211,22 +211,31 @@ class DeviceInputMappingHandler(ConfigHandler):
             "i1":{
                 "probe": 0,
                 "acidic": 9, #GPIO 0
-                "alkaline": 11 #GPIO 2
+                "alkaline": 11, #GPIO 2
+                "acidic_value": 0,
+                "alkaline_value": 0
             },
              "i2":{
                 "probe": 1,
                 "acidic": 13, #GPIO 2
-                "alkaline": 15 #GPIO 3
+                "alkaline": 15, #GPIO 3
+                "acidic_value": 0,
+                "alkaline_value": 0
             },
              "i3":{
                 "probe": 2,
                 "acidic": 16, #GPIO 4
-                "alkaline": 18 #GPIO 5
+                "alkaline": 18, #GPIO 5
+                "acidic_value": 0,
+                "alkaline_value": 0
+
             },
              "i4":{
                 "probe": 3,
                 "acidic": 19, #GPIO 12
-                "alkaline": 21 #GPIO 13
+                "alkaline": 21, #GPIO 13
+                "acidic_value": 0,
+                "alkaline_value": 0
             }
         }
         self.config = self._load_file()
@@ -237,9 +246,22 @@ class DeviceInputMappingHandler(ConfigHandler):
         config = self.config[input_number]
         return (config["acidic"], config["alkaline"])
 
+    def set_calibration_value(self, input_number, value_channel, value):
+        if not input_number in self.config: 
+            raise ValueError("There is no input number configurtion for the provided input")
+        config = self.config[input_number]
+        if not value_channel in config: 
+            raise ValueError("You are trying to set the value of an unknown channel")
+        config[value_channel] = value
+        self._save_config({
+            **self.config,
+            **config
+            })
+
 
 
 if __name__ == "__main__":
     config = DeviceInputMappingHandler()
     acidic, alkaline = config.get_pump_pins("i1")
-    print(acidic, alkaline)
+    config.set_calibration_value("i1", "alkaline_value", 16000)
+    print(config.config)
