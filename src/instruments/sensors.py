@@ -1,7 +1,6 @@
 
 import json
 import RPi.GPIO as GPIO
-import threading
 import time
 import datetime
 

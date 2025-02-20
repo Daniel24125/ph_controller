@@ -13,7 +13,6 @@ except Exception:
     print("Activating simulation mode...")
     simulation_mode = True
 
-print(simulation_mode)
 import numpy as np
 from scipy import stats
 import random 
@@ -66,9 +65,6 @@ class AnalogCommunication:
                     an_read = AnalogIn(ADS.ADS1115(i2c), self.sensor_config["probe"]).value
                 analog_values[i] = an_read
             except Exception as err: 
-                # print("Error on get_read")
-                # print(err)
-                # self.error=True
                 pass
         mask = np.ma.masked_equal(analog_values,0).compressed()
         analog_avg = np.average(mask)
@@ -90,7 +86,6 @@ class AnalogCommunication:
                     self.analog_read = analog_read
                     self.converted_read = round((analog_read-b)/m, 2)
         except Exception as err:
-            print("ERROR ON UPDATE VALUES")
             print(err)
             self.error=True
 

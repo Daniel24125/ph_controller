@@ -65,7 +65,6 @@ class PHController:
 
     def read_ph(self):
         try: 
-            #return self.random_gen.get_next()
             return self.comunicator.get_read()
         except Exception as err: 
             print(err)
@@ -100,7 +99,7 @@ class PHController:
         # if not pump_pin: 
         #     return 
         pump_time = self.calculate_pump_time(current_ph)
-        t = threading.Thread(target=self.actviate_pump, args=(self.valve_port, pump_time))
+        t = threading.Thread(target=self.actviate_pump, args=(self.acidic_pump_pin , pump_time))
         t.start()
 
     def actviate_pump(self, pump_pin, pump_time):

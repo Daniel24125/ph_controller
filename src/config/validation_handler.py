@@ -32,13 +32,10 @@ class Validator:
             'margin': (int, float),
             'maxValveTimeOpen': (int, float),
             'targetPh': (int, float),
-            'probePort': (int, str),
-            'valvePort': (int, str),
+            'devicePort': str,
             'checkInterval': (int, float),
             'createdAt': str
         }
-
-        
 
         for field, field_type in required_fields.items():
             if field not in sensor:
