@@ -3,7 +3,6 @@ import time
 import sys 
 from pathlib import Path
 import threading
-import uuid
 from datetime import datetime
 
 # Add parent directory to Python path
@@ -14,7 +13,7 @@ except ImportError:
     from utils.mock_gpio import MockGPIO 
     GPIO = MockGPIO()
 
-from utils.utils import IncrementalRandomGenerator, AnalogCommunication
+from utils.utils import  AnalogCommunication
 from config.config_handler import DeviceInputMappingHandler
 
 
@@ -41,7 +40,6 @@ class PHController:
         self.mode = mode
         self.send_log_to_client = send_log_to_client
         self.location = location
-        self.random_gen = IncrementalRandomGenerator(1,12,0.1)
         self.init_sensor()
         #self.init_gpio()
     
@@ -201,16 +199,36 @@ if __name__ == "__main__":
     pass
      # Usage example:
     probe = "i4"
-    controller = PHController(
+    probes = [ PHController(
         location=None, 
         send_log_to_client=None,
         device_port=probe, 
         target_ph=7.0, 
         mode="acidic"
-    )
-    
-    read = controller.read_ph()
-    print(read)
+    ),  PHController(
+        location=None, 
+        send_log_to_client=None,
+        device_port=probe, 
+        target_ph=7.0, 
+        mode="acidic"
+    ),  PHController(
+        location=None, 
+        send_log_to_client=None,
+        device_port=probe, 
+        target_ph=7.0, 
+        mode="acidic"
+    ),  PHController(
+        location=None, 
+        send_log_to_client=None,
+        device_port=probe, 
+        target_ph=7.0, 
+        mode="acidic"
+    )]
+    while True: 
+        for controller in probes: 
+            read = controller.read_ph()
+            print(read)
+        time.sleep(2)
     
     #controller.port_mapper.set_calibration_value(probe, "acidic_value", read)
     

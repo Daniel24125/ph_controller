@@ -4,11 +4,17 @@ import json
 #     import RPi.GPIO as GPIO
 # except ImportError:
 #     from utils.mock_gpio import GPIO
+try: 
+    import adafruit_ads1x15.ads1115 as ADS
+    from adafruit_ads1x15.analog_in import AnalogIn
+    import busio
+    import board 
+except Exception: 
+    print("Activating simulation mode...")
+    simulation_mode = True
+
+print(simulation_mode)
 import numpy as np
-import adafruit_ads1x15.ads1115 as ADS
-from adafruit_ads1x15.analog_in import AnalogIn
-import busio
-import board 
 from scipy import stats
 import random 
 
@@ -33,6 +39,7 @@ class AnalogCommunication:
         self.analog_read = 0
         self.converted_read = 0
         self.ready = True
+        self.random_gen = IncrementalRandomGenerator(3000,16000,50)
    
    
     def get_regression_params(self): 
@@ -52,8 +59,11 @@ class AnalogCommunication:
         analog_values = np.zeros(NUM_MEAS_FOR_AVG)
         for i in range(NUM_MEAS_FOR_AVG):
             try: 
-                i2c = busio.I2C(board.SCL, board.SDA)
-                an_read = AnalogIn(ADS.ADS1115(i2c), self.sensor_config["probe"]).value
+                if simulation_mode:
+                    an_read = self.random_gen.get_next()
+                else:     
+                    i2c = busio.I2C(board.SCL, board.SDA)
+                    an_read = AnalogIn(ADS.ADS1115(i2c), self.sensor_config["probe"]).value
                 analog_values[i] = an_read
             except Exception as err: 
                 # print("Error on get_read")
