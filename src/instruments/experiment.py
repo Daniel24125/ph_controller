@@ -66,6 +66,7 @@ class ExperimentHandler:
 
     def send_data_to_client(self, data): 
         self.socket.emit("sensor_data", {
+            "deviceID": self.device["id"],
             "data": [{**d, "x": self.duration} for d in data]
         })
         logger.info("Sensor data sent to the client")

@@ -82,10 +82,10 @@ class PHController:
         define_acid_pump = self.mode == "acidic" or self.mode == "auto"
         if is_acidic and define_base_pump:
             print("Base pump activated!")
-            pump_pin = self.base_pump_pin
+            pump_pin = self.alkaline_pump_pin
         elif not is_acidic and define_acid_pump:
             print("Acidic pump activated!")
-            # pump_pin = self.acid_pump_pin
+            pump_pin = self.acidic_pump_pin
         else:
             return  # pH is at target, no adjustment needed
         return pump_pin
@@ -95,9 +95,9 @@ class PHController:
         if self.target_ph - self.margin <= current_ph <= self.target_ph + self.margin:
             print("pH value with the margin values. No adjustment necessary")
             return
-        # pump_pin = self.determine_pump(current_ph)
-        # if not pump_pin: 
-        #     return 
+        pump_pin = self.determine_pump(current_ph)
+        if not pump_pin: 
+            return 
         pump_time = self.calculate_pump_time(current_ph)
         t = threading.Thread(target=self.actviate_pump, args=(self.acidic_pump_pin , pump_time))
         t.start()
@@ -166,8 +166,7 @@ class SensorManager:
                     })
                     controler.adjust_ph()
                 self.send_data(send_data)
-                
-                time.sleep(dataAquisitionInterval)
+                time.sleep(int(dataAquisitionInterval))
         except Exception as err:
             print(err)
             GPIO.cleanup()

@@ -101,6 +101,7 @@ class DeviceSocketClient:
         # Send initial device configuration
         sio.emit("register_client", "rpi")
         sio.emit("get_rpi_config", self.config_handler.get_config())
+        
 
     def _handle_disconnect(self) -> None:
         """Handle disconnection from server."""
