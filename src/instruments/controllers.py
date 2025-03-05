@@ -85,7 +85,7 @@ class PHController:
             pump_pin = self.alkaline_pump_pin
         elif not is_acidic and define_acid_pump:
             print("Acidic pump activated!")
-            pump_pin = self.acidic_pump_pin
+            pump_pin = self.acidic_pump_pin1\
         else:
             return  # pH is at target, no adjustment needed
         return pump_pin
@@ -204,7 +204,7 @@ if __name__ == "__main__":
         target_ph=7.0, 
         mode="acidic"
     )]
-    
+
     while True: 
         for controller in probes: 
             read = controller.read_ph()
