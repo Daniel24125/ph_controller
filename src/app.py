@@ -3,7 +3,7 @@ import socketio
 from typing import Dict, Any
 from pathlib import Path
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 from config.config_handler import DeviceConfigHandler, Validator
 from operator import itemgetter
 import traceback
@@ -13,7 +13,7 @@ from instruments.experiment import ExperimentHandler
 from utils.logger import logger
 
 # Load environment variables from .env.local
-env_path = Path('.env.local')
+env_path = Path('/.env.local')
 load_dotenv(dotenv_path=env_path)
 
 
@@ -176,4 +176,5 @@ if __name__ == "__main__":
         socket.start()
     except KeyboardInterrupt:
         logger.info("Disconnecting from the server") 
-        socket.cleanup()
+        socket.cleanup() 
+ 

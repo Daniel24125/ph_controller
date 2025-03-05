@@ -69,4 +69,3 @@ class ExperimentHandler:
             "deviceID": self.device["id"],
             "data": [{**d, "x": self.duration} for d in data]
         })
-        logger.info("Sensor data sent to the client")

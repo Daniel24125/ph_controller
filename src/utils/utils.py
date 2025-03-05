@@ -45,7 +45,6 @@ class AnalogCommunication:
    
     def get_regression_params(self): 
         try:
-
             x = np.array([self.sensor_config["acidic_value"], self.sensor_config["alkaline_value"]]).astype(np.float64)
             y = np.array([4,7]).astype(np.float64)
             cal = stats.linregress(x,y)

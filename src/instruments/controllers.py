@@ -41,7 +41,7 @@ class PHController:
         self.send_log_to_client = send_log_to_client
         self.location = location
         self.init_sensor()
-        #self.init_gpio()
+        self.init_gpio()
     
     def init_sensor(self): 
         self.is_running = False
@@ -85,7 +85,7 @@ class PHController:
             pump_pin = self.alkaline_pump_pin
         elif not is_acidic and define_acid_pump:
             print("Acidic pump activated!")
-            pump_pin = self.acidic_pump_pin1\
+            pump_pin = self.acidic_pump_pin
         else:
             return  # pH is at target, no adjustment needed
         return pump_pin
@@ -117,7 +117,7 @@ class PHController:
         self.is_running = False
         GPIO.cleanup()
         print("Monitorization stopped")
-
+ 
 
 
 class SensorManager: 
