@@ -121,11 +121,12 @@ class PHController:
 
 
 class SensorManager: 
-    def __init__(self, socket, send_data):
+    def __init__(self, socket, send_data, send_log):
         self.send_data = send_data
         self.controllers = []
         self.is_running = False
         self.socket = socket
+        self.send_log_to_client = send_log
 
     def register_sensors(self, locations): 
         
@@ -182,16 +183,7 @@ class SensorManager:
         GPIO.cleanup()
         print("Monitorization stopped")
 
-    def send_log_to_client(self, type, desc, location): 
-        print("Sending log to client from location: ", location)
-        log ={
-            # "id": uuid.uuid4(),
-            "type": type,
-            "desc": desc,
-            "createdAt":  datetime.now().isoformat(),
-            "location": location
-        }
-        self.socket.emit("update_experiment_log", log)
+   
 
 if __name__ == "__main__":
     pass

@@ -42,7 +42,7 @@ class DeviceSocketClient:
          # Set up signal handlers
         self.event_handlers_registrations()
         self.validator = Validator()
-        self.experimentHandler = ExperimentHandler(sio)
+        self.experimentHandler = ExperimentHandler(sio, connection_handler=self)
 
     def parseCommands(self, command_data): 
         if "data" not in command_data or "cmd" not in command_data: 
@@ -171,8 +171,8 @@ class DeviceSocketClient:
 
 if __name__ == "__main__": 
     try:
-        #socket = DeviceSocketClient(server_url="http://localhost:8000")
-        socket = DeviceSocketClient(server_url="https://sensormonitorss.onrender.com")
+        socket = DeviceSocketClient(server_url="http://localhost:8000")
+        # socket = DeviceSocketClient(server_url="https://sensormonitorss.onrender.com")
         socket.start()
     except KeyboardInterrupt:
         logger.info("Disconnecting from the server") 

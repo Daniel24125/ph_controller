@@ -5,6 +5,7 @@ from pathlib import Path
 # Add parent directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
 
+from datetime import datetime
 
 from utils.logger import logger
 from config.config_handler import DeviceConfigHandler
@@ -12,14 +13,15 @@ from instruments.controllers import SensorManager
 from utils.timer import IntervalTimer
 
 class ExperimentHandler: 
-    def __init__(self, socket): 
+    def __init__(self, socket, connection_handler): 
         self.duration = 0
         self.socket = socket 
+        self.connection_handler = connection_handler
         self.device_handler = DeviceConfigHandler()
         self.device = self.device_handler.get_config()
         self.sensors = []
         self.timer = IntervalTimer()
-        self.sensor_manager = SensorManager(socket, self.send_data_to_client)
+        self.sensor_manager = SensorManager(socket, self.send_data_to_client, self.send_log_to_client)
        
     def update_socket(self, socket):
         self.socket = socket 
@@ -60,12 +62,27 @@ class ExperimentHandler:
 
     def update_duration(self): 
         self.duration = self.duration + 1
-        self.socket.emit("update_experiment_status", {
+        self.emit("update_experiment_status", {
             "duration": self.duration
         })
 
     def send_data_to_client(self, data): 
-        self.socket.emit("sensor_data", {
+        self.emit("sensor_data", {
             "deviceID": self.device["id"],
             "data": [{**d, "x": self.duration} for d in data]
         })
+
+    def send_log_to_client(self, type, desc, location): 
+        print("Sending log to client from location: ", location)
+        log ={
+            # "id": uuid.uuid4(),
+            "type": type,
+            "desc": desc,
+            "createdAt":  datetime.now().isoformat(),
+            "location": location
+        }
+        self.emit("update_experiment_log", log)
+
+    def emit(self, channel, data): 
+        if self.connection_handler.connected: 
+            self.socket.emit(channel, data)
