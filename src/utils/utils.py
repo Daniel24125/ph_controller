@@ -4,6 +4,8 @@ import json
 #     import RPi.GPIO as GPIO
 # except ImportError:
 #     from utils.mock_gpio import GPIO
+simulation_mode= False
+
 try: 
     import adafruit_ads1x15.ads1115 as ADS
     from adafruit_ads1x15.analog_in import AnalogIn
@@ -54,9 +56,11 @@ class AnalogCommunication:
 
     # This method is responsible for getting an analog read of the sensors. The read value corresponds to an average of 20 reads (i.e., 20 by default)
     def get_read(self, NUM_MEAS_FOR_AVG=20):
+
         self.ready=False
         analog_values = np.zeros(NUM_MEAS_FOR_AVG)
         for i in range(NUM_MEAS_FOR_AVG):
+
             try: 
                 if simulation_mode:
                     an_read = self.random_gen.get_next()
@@ -65,6 +69,7 @@ class AnalogCommunication:
                     an_read = AnalogIn(ADS.ADS1115(i2c), self.sensor_config["probe"]).value
                 analog_values[i] = an_read
             except Exception as err: 
+                print(err)
                 pass
         mask = np.ma.masked_equal(analog_values,0).compressed()
         analog_avg = np.average(mask)

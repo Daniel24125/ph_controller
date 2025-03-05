@@ -203,25 +203,8 @@ if __name__ == "__main__":
         device_port=probe, 
         target_ph=7.0, 
         mode="acidic"
-    ),  PHController(
-        location=None, 
-        send_log_to_client=None,
-        device_port=probe, 
-        target_ph=7.0, 
-        mode="acidic"
-    ),  PHController(
-        location=None, 
-        send_log_to_client=None,
-        device_port=probe, 
-        target_ph=7.0, 
-        mode="acidic"
-    ),  PHController(
-        location=None, 
-        send_log_to_client=None,
-        device_port=probe, 
-        target_ph=7.0, 
-        mode="acidic"
     )]
+    
     while True: 
         for controller in probes: 
             read = controller.read_ph()
