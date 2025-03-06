@@ -108,6 +108,58 @@ class IncrementalRandomGenerator:
         return round(self.current, 2)
     
 
+import json
+from pathlib import Path
+from datetime import datetime
+
+class DataBackupHandler:
+    def __init__(self):
+        self.backup_dir = Path("../temp")
+        self.backup_dir.mkdir(exist_ok=True)
+        
+    def start_experiment(self):
+        """Set up a new experiment backup session"""
+        self.experiment_dir = self.backup_dir / "temp_exp"
+        self.experiment_dir.mkdir(exist_ok=True)
+    
+    def save_data(self, channel, data):
+        """Save data to a temporary file"""            
+        backup_file = self.experiment_dir / f"{channel}.jsonl"
+        with open(backup_file, 'a') as f:
+            entry = {
+                'timestamp': datetime.now().isoformat(),
+                'data': data
+            }
+            f.write(json.dumps(entry) + '\n')
+    
+    def get_unsent_data(self, channel):
+        """Retrieve unsent data for a specific channel"""
+
+        backup_file = self.experiment_dir / f"{channel}.jsonl"
+        if not backup_file.exists():
+            return []
+            
+        unsent_data = []
+        with open(backup_file, 'r') as f:
+            for line in f:
+                try:
+                    entry = json.loads(line)
+                    unsent_data.append(entry['data'])
+                except json.JSONDecodeError:
+                    pass
+        
+        return unsent_data
+    
+    def cleanup_experiment(self):
+        """Remove all temporary files when experiment is complete"""
+        if not self.current_experiment_id:
+            return
+            
+        import shutil
+        if self.experiment_dir.exists():
+            shutil.rmtree(self.experiment_dir)
+        
+
 if __name__ == "__main__": 
     sensor = AnalogCommunication()
     value = sensor.get_read()
