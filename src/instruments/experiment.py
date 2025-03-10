@@ -45,10 +45,9 @@ class ExperimentHandler:
 
     def start_experiment(self, data): 
         logger.info("Starting the experiment")
+        self.backup_handler.start_experiment()
         self.initiate_sensors(data)
         self.start_experiment_timer()
-        # self.backup_handler.start_experiment()
-        logger.info(data)
 
     def pause_experiment(self, data): 
         logger.info("Pausing the experiment")
@@ -65,7 +64,7 @@ class ExperimentHandler:
         logger.info("Stoping the experiment")
         self.timer.stop()
         self.sensor_manager.stop_controllers()
-        # self.backup_handler.cleanup_experiment()
+        self.backup_handler.cleanup_experiment()
         self.reset_experimental_data()
 
     def initiate_sensors(self, data): 
@@ -113,10 +112,10 @@ class ExperimentHandler:
         # self.backup_handler.save_data(channel, data)
         if self.connection_handler.connected:
             # If there's unsent data, send it first
-            # unsent_data = self.backup_handler.get_unsent_data(channel)
-            # for item in unsent_data:
-            #     self.socket.emit(channel, item)
-                
+            unsent_data = self.backup_handler.get_unsent_data()
+            data = self.experiment_data[""]
+            if num_files%5 == 0 : 
+                self.backup_handler.save_data(self.experiment_data)  
             # Now send current data
             self.socket.emit(channel, data)
         else:

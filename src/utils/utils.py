@@ -1,11 +1,14 @@
 
 import json
-# try:
-#     import RPi.GPIO as GPIO
-# except ImportError:
-#     from utils.mock_gpio import GPIO
-simulation_mode= False
+from pathlib import Path
+from datetime import datetime
+import uuid
+import os
+import numpy as np
+from scipy import stats
+import random 
 
+simulation_mode= False
 try: 
     import adafruit_ads1x15.ads1115 as ADS
     from adafruit_ads1x15.analog_in import AnalogIn
@@ -15,9 +18,7 @@ except Exception:
     print("Activating simulation mode...")
     simulation_mode = True
 
-import numpy as np
-from scipy import stats
-import random 
+
 
 port_map = [ADS.P0, ADS.P1, ADS.P2, ADS.P3]
 
@@ -108,56 +109,83 @@ class IncrementalRandomGenerator:
         return round(self.current, 2)
     
 
-import json
-from pathlib import Path
-from datetime import datetime
-
 class DataBackupHandler:
     def __init__(self):
-        self.backup_dir = Path("../temp")
-        self.backup_dir.mkdir(exist_ok=True)
+        self.backup_dir = Path(os.path.join(os.getcwd(), "src/temp")) 
         
     def start_experiment(self):
         """Set up a new experiment backup session"""
-        self.experiment_dir = self.backup_dir / "temp_exp"
-        self.experiment_dir.mkdir(exist_ok=True)
+        self.backup_dir.mkdir(exist_ok=True)
     
-    def save_data(self, channel, data):
+    def save_data(self, data):
         """Save data to a temporary file"""            
-        backup_file = self.experiment_dir / f"{channel}.jsonl"
-        with open(backup_file, 'a') as f:
-            entry = {
-                'timestamp': datetime.now().isoformat(),
-                'data': data
-            }
-            f.write(json.dumps(entry) + '\n')
-    
-    def get_unsent_data(self, channel):
-        """Retrieve unsent data for a specific channel"""
-
-        backup_file = self.experiment_dir / f"{channel}.jsonl"
-        if not backup_file.exists():
-            return []
-            
-        unsent_data = []
-        with open(backup_file, 'r') as f:
-            for line in f:
-                try:
-                    entry = json.loads(line)
-                    unsent_data.append(entry['data'])
-                except json.JSONDecodeError:
-                    pass
+        if not hasattr(self, "backup_dir"): 
+            print("ERROR: backup_dir not initialized")
+            return 
         
+        try:
+            # Ensure backup_dir is a Path object
+            if not isinstance(self.backup_dir, Path):
+                self.backup_dir = Path(self.backup_dir)
+            
+            # Make sure the directory exists
+            if not self.backup_dir.exists():
+                print(f"Creating directory: {self.backup_dir}")
+                self.backup_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Create the file
+            backup_file = self.backup_dir / f"exp_chunk_{uuid.uuid4()}.jsonl"
+            print(f"Writing to file: {backup_file}")
+            
+            with open(backup_file, 'w') as f:
+                f.write(json.dumps(data))
+                f.flush()  # Ensure data is written to disk
+                os.fsync(f.fileno())  # Force OS to write to physical storage
+            # Verify the file was created
+            if backup_file.exists():
+                print(f"Successfully created file: {backup_file}")
+            else:
+                print(f"File creation failed. File doesn't exist: {backup_file}")
+                
+        except Exception as err: 
+            print(f"ERROR type: {type(err).__name__}")
+            print(f"ERROR message: {str(err)}")
+            print(f"ERROR details: {repr(err)}")
+            # Print stack trace for more details
+            import traceback
+            traceback.print_exc()
+    
+    def get_unsent_data(self):
+        """Retrieve unsent data for a specific channel"""
+        if not hasattr(self, "backup_dir"): 
+            return []
+        
+        all_items = os.listdir(self.backup_dir)
+        if len(all_items) == 0:
+            return []
+        
+        unsent_data = []
+        for item in all_items: 
+            access_dir = os.path.join(self.backup_dir, item)
+            is_file = os.path.isfile(access_dir)
+            if is_file:  
+                with open(access_dir, 'r') as f:
+                    for line in f:
+                        try:
+                            entry = json.loads(line)
+                            # unsent_data.append(entry['data'])
+                        except json.JSONDecodeError:
+                            pass
         return unsent_data
     
     def cleanup_experiment(self):
         """Remove all temporary files when experiment is complete"""
-        if not self.current_experiment_id:
+        if not self.backup_dir:
             return
             
         import shutil
-        if self.experiment_dir.exists():
-            shutil.rmtree(self.experiment_dir)
+        if self.backup_dir.exists():
+            shutil.rmtree(self.backup_dir)
         
 
 if __name__ == "__main__": 
