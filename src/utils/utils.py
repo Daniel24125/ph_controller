@@ -110,8 +110,9 @@ class IncrementalRandomGenerator:
     
 
 class DataBackupHandler:
-    def __init__(self, ):
+    def __init__(self):
         self.backup_dir = Path(os.path.join(os.getcwd(), "src/temp")) 
+        self.backup_dir.mkdir(exist_ok=True)
         
     def start_experiment(self):
         """Set up a new experiment backup session"""
@@ -134,7 +135,7 @@ class DataBackupHandler:
                 self.backup_dir.mkdir(parents=True, exist_ok=True)
             
             # Create the file
-            backup_file = self.backup_dir / f"exp_chunk_{uuid.uuid4()}.jsonl"
+            backup_file = self.backup_dir / f"exp_chunk_{datetime.timestamp(datetime.now())}_{uuid.uuid4()}.jsonl"
             print(f"Writing to file: {backup_file}")
             
             with open(backup_file, 'w') as f:
@@ -172,22 +173,51 @@ class DataBackupHandler:
                     for line in f:
                         try:
                             entry = json.loads(line)
-                            # unsent_data.append(entry['data'])
+                            unsent_data.append(entry)
                         except json.JSONDecodeError:
                             pass
         return unsent_data
     
+    def get_full_backup_data(self):
+        temp_data = {
+            "locations": [],
+            "logs": []
+        }
+        
+        unsent_data = self.get_unsent_data()
+    
+        for chunk in unsent_data:
+            # Handle locations
+            if not temp_data["locations"]:
+                # First chunk - just copy the locations
+                temp_data["locations"] = chunk["locations"].copy()  # Using copy to avoid reference issues
+            else:
+                # For subsequent chunks, merge location data
+                for i in range(min(len(temp_data["locations"]), len(chunk["locations"]))):
+                    if "data" in chunk["locations"][i] and "data" in temp_data["locations"][i]:
+                        temp_data["locations"][i].setdefault("data", []).extend(chunk["locations"][i]["data"])
+            
+            # Append logs
+            temp_data["logs"].extend(chunk["logs"])
+            
+            # Handle other keys without modifying the original chunk
+            chunk_copy = chunk.copy()
+            chunk_copy.pop("locations", None)
+            chunk_copy.pop("logs", None)
+            temp_data.update(chunk_copy)
+        
+        return temp_data
+
     def cleanup_experiment(self):
         """Remove all temporary files when experiment is complete"""
         if not self.backup_dir:
             return
-        print(self.get_unsent_data())
         import shutil
         if self.backup_dir.exists():
             shutil.rmtree(self.backup_dir)
         
 
 if __name__ == "__main__": 
-    sensor = AnalogCommunication()
-    value = sensor.get_read()
-    print(value)
+    backup = DataBackupHandler()
+    unsent_data = backup.get_full_backup_data()
+    print(unsent_data)

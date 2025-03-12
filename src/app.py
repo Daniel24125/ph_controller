@@ -32,26 +32,25 @@ def cleanup():
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM,signal_handler)
 
+config_handler = DeviceConfigHandler()
+validator = Validator()
 
 class DeviceSocketClient:
 
     def __init__(self,server_url: str = None):
         self.server_url = server_url or os.getenv('SOCKET_SERVER_URL')
-        self.config_handler = DeviceConfigHandler()
         self.connected = False
-         # Set up signal handlers
         self.event_handlers_registrations()
-        self.validator = Validator()
-        self.experimentHandler = ExperimentHandler(sio, connection_handler=self)
+        self.experiment_handler = ExperimentHandler(sio, connection_handler=self)
 
     def parseCommands(self, command_data): 
         if "data" not in command_data or "cmd" not in command_data: 
             raise ValueError("Command data with the wrong format") 
         commands = {
-            "startExperiment": self.experimentHandler.start_experiment,
-            "pauseExperiment": self.experimentHandler.pause_experiment,
-            "resumeExperiment": self.experimentHandler.resume_experiment,
-            "stopExperiment": self.experimentHandler.stop_experiment
+            "startExperiment": self.experiment_handler.start_experiment,
+            "pauseExperiment": self.experiment_handler.pause_experiment,
+            "resumeExperiment": self.experiment_handler.resume_experiment,
+            "stopExperiment": self.experiment_handler.stop_experiment
         }
         commands[command_data["cmd"]](command_data["data"])
 
@@ -72,16 +71,16 @@ class DeviceSocketClient:
     def appy_cmd(self, cmd):
         """Applies the received command after validation"""
         cmd_pipline={
-            "device|update": {"fn": self.config_handler.update_device_info, "args": None},
-            "configuration|create": {"fn": self.config_handler.add_device_configuration, "args": None},
-            "configuration|update": {"fn": self.config_handler.update_device_configuration_info, "args": None},
-            "configuration|delete": {"fn": self.config_handler.delete_device_configuration, "args": ["configurationID"]},
-            "location|create": {"fn": self.config_handler.add_location, "args": ["configurationID"]},
-            "location|update": {"fn": self.config_handler.update_location_info, "args": ["configurationID", "locationID"]},
-            "location|delete": {"fn": self.config_handler.delete_location, "args": ["configurationID", "locationID"]},
-            "sensor|create": {"fn": self.config_handler.add_sensor, "args": ["configurationID", "locationID"]},
-            "sensor|update": {"fn": self.config_handler.update_sensor_info, "args": ["configurationID", "locationID", "sensorID"]},
-            "sensor|delete": {"fn": self.config_handler.delete_sensor, "args": ["configurationID", "locationID", "sensorID"]},
+            "device|update": {"fn": config_handler.update_device_info, "args": None},
+            "configuration|create": {"fn": config_handler.add_device_configuration, "args": None},
+            "configuration|update": {"fn": config_handler.update_device_configuration_info, "args": None},
+            "configuration|delete": {"fn": config_handler.delete_device_configuration, "args": ["configurationID"]},
+            "location|create": {"fn": config_handler.add_location, "args": ["configurationID"]},
+            "location|update": {"fn": config_handler.update_location_info, "args": ["configurationID", "locationID"]},
+            "location|delete": {"fn": config_handler.delete_location, "args": ["configurationID", "locationID"]},
+            "sensor|create": {"fn": config_handler.add_sensor, "args": ["configurationID", "locationID"]},
+            "sensor|update": {"fn": config_handler.update_sensor_info, "args": ["configurationID", "locationID", "sensorID"]},
+            "sensor|delete": {"fn": config_handler.delete_sensor, "args": ["configurationID", "locationID", "sensorID"]},
         }
         context, operation, data = itemgetter("context", "operation", "data")(cmd)
 
@@ -100,9 +99,11 @@ class DeviceSocketClient:
         logger.info(f"Connected to server: {self.server_url}")
         # Send initial device configuration
         sio.emit("register_client", "rpi")
-        sio.emit("get_rpi_config", self.config_handler.get_config())
-        # unset_data = backup_handler.get_unsent_data()
-        # if len(unset_data) > 0: 
+        sio.emit("get_rpi_config", config_handler.get_config())
+        if self.experiment_handler.is_experiment_ongoing():
+            unsent_data = backup_handler.get_unsent_data()
+            print("UNSENT DATA: ", unsent_data)
+
 
         
         
@@ -131,15 +132,15 @@ class DeviceSocketClient:
         
         try:
             logger.info(f"Received config update: {cmd}")
-            self.validator.validateConfigOperationCommand(cmd)
+            validator.validateConfigOperationCommand(cmd)
             self.appy_cmd(cmd)
-            sio.emit("refresh_device_data", self.config_handler.get_config())
+            sio.emit("refresh_device_data", config_handler.get_config())
         except Exception as e:
             logger.error(traceback.format_exc())
             logger.error(f"Error handling config update: {e}")
             sio.emit('error', {
                 'message': str(e),
-                'device_id': self.config_handler.get_config().get('id')
+                'device_id': config_handler.get_config().get('id')
             })
 
     def connect(self) -> None:
@@ -170,7 +171,7 @@ class DeviceSocketClient:
         logger.error(f"An error occured in a device command: {err}")
         sio.emit("error", {
             "message": f"An error occured in a device command: {err}",
-            "device_id": self.config_handler.get_config()["id"]
+            "device_id": config_handler.get_config()["id"]
         })
 
 if __name__ == "__main__": 

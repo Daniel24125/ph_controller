@@ -1,7 +1,7 @@
 
 import sys 
 from pathlib import Path
-import json 
+
 
 # Add parent directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -18,6 +18,8 @@ backup_handler = DataBackupHandler()
 device_handler = DeviceConfigHandler()
 device = device_handler.get_config()
 timer = IntervalTimer()
+
+DATA_BACKUP_PERIOD = 10
 
 class ExperimentHandler: 
     def __init__(self, socket, connection_handler): 
@@ -49,6 +51,7 @@ class ExperimentHandler:
         backup_handler.start_experiment()
         self.initiate_sensors(data)
         self.start_experiment_timer()
+        self.send_log_to_client("info","Experiment started","Device")
 
     def pause_experiment(self, data): 
         logger.info("Pausing the experiment")
@@ -69,10 +72,15 @@ class ExperimentHandler:
 
     def initiate_sensors(self, data): 
         locations = self.get_experiment_locations(data["configurationID"])
-        self.update_experimetal_data({"configurationID" : data["configurationID"]})
+        self.update_experimetal_data({
+            **data,
+            "status": "busy"
+        })
         self.sensor_manager.register_sensors(locations=locations)
         self.sensor_manager.start(dataAquisitionInterval=data["dataAquisitionInterval"])
-        self.reset_location_data()
+    
+    def is_experiment_ongoing(self): 
+        return self.experiment_data["status"] == "busy"
 
     def get_experiment_locations(self, configurationID): 
         conf = device_handler.get_configuration_by_id(configurationID)
@@ -81,9 +89,10 @@ class ExperimentHandler:
         return conf[0]["locations"]
     
     def reset_location_data(self): 
-        print(self.experiment_data["configurationID"])
         locations = self.get_experiment_locations(self.experiment_data["configurationID"])
-        self.experiment_data["locations"] = [{"id": l["id"], "data": []} for l in locations]
+        self.experiment_data["locations"] =  [{"id": l["id"], "data": []} for l in locations]
+        self.experiment_data["logs"] = []
+        
     
     def start_experiment_timer(self):
         timer.start(1, self.update_duration)
@@ -119,6 +128,7 @@ class ExperimentHandler:
             "createdAt":  datetime.now().isoformat(),
             "location": location
         }
+        self.experiment_data["logs"].append(log)
         self.emit("update_experiment_log", log)
 
     def update_experimetal_data(self, data): 
@@ -126,20 +136,12 @@ class ExperimentHandler:
             **self.experiment_data, 
             **data
         }
-        if self.experiment_data["duration"]%30 == 0: 
+        if self.experiment_data["duration"]%DATA_BACKUP_PERIOD == 0: 
             backup_handler.save_data(self.experiment_data)  
             self.reset_location_data() 
 
 
     def emit(self, channel, data): 
-        # backup_handler.save_data(channel, data)
         if self.connection_handler.connected:
-            # If there's unsent data, send it first
-            unsent_data = backup_handler.get_unsent_data()
-            # Now send current data
             self.socket.emit(channel, data)
-        else:
-            # Connection lost - save to temp file
-           
-            print(f"Connection lost - saving {channel} data to temporary file")
-        
+      
