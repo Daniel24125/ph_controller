@@ -101,6 +101,9 @@ class DeviceSocketClient:
         # Send initial device configuration
         sio.emit("register_client", "rpi")
         sio.emit("get_rpi_config", self.config_handler.get_config())
+        # unset_data = backup_handler.get_unsent_data()
+        # if len(unset_data) > 0: 
+
         
         
 

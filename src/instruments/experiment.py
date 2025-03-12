@@ -60,7 +60,6 @@ class ExperimentHandler:
         self.start_experiment_timer()
         self.sensor_manager.start(dataAquisitionInterval=data["dataAquisitionInterval"])
 
-
     def stop_experiment(self, data): 
         logger.info("Stoping the experiment")
         timer.stop()
@@ -69,12 +68,21 @@ class ExperimentHandler:
         self.reset_experimental_data()
 
     def initiate_sensors(self, data): 
-        conf = device_handler.get_configuration_by_id(data["configurationID"])
-        if len(conf) != 1:
-            raise FileNotFoundError("No config or more than one config found") 
-        locations = conf[0]["locations"]
+        locations = self.get_experiment_locations(data["configurationID"])
+        self.update_experimetal_data({"configurationID" : data["configurationID"]})
         self.sensor_manager.register_sensors(locations=locations)
         self.sensor_manager.start(dataAquisitionInterval=data["dataAquisitionInterval"])
+        self.reset_location_data()
+
+    def get_experiment_locations(self, configurationID): 
+        conf = device_handler.get_configuration_by_id(configurationID)
+        if len(conf) != 1:
+            raise FileNotFoundError("No config or more than one config found") 
+        return conf[0]["locations"]
+    
+    def reset_location_data(self): 
+        print(self.experiment_data["configurationID"])
+        locations = self.get_experiment_locations(self.experiment_data["configurationID"])
         self.experiment_data["locations"] = [{"id": l["id"], "data": []} for l in locations]
     
     def start_experiment_timer(self):
@@ -120,6 +128,7 @@ class ExperimentHandler:
         }
         if self.experiment_data["duration"]%30 == 0: 
             backup_handler.save_data(self.experiment_data)  
+            self.reset_location_data() 
 
 
     def emit(self, channel, data): 

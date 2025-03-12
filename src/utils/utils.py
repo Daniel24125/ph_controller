@@ -158,9 +158,7 @@ class DataBackupHandler:
     def get_saved_files(self): 
         if not hasattr(self, "backup_dir"): 
             return []
-        return os.listdir(self.backup_dir)
-       
-        
+        return os.listdir(self.backup_dir) 
         
     def get_unsent_data(self):
         """Retrieve unsent data for a specific channel"""
@@ -183,7 +181,7 @@ class DataBackupHandler:
         """Remove all temporary files when experiment is complete"""
         if not self.backup_dir:
             return
-            
+        print(self.get_unsent_data())
         import shutil
         if self.backup_dir.exists():
             shutil.rmtree(self.backup_dir)
