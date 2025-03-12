@@ -53,7 +53,6 @@ class PHController:
         )
 
     def set_mode(self, mode):
-        print(mode)
         if mode != "acidic" or mode != "alkaline" or mode != "auto":
             raise NameError("You are trying to set the controller mode to an invalid mode. Available options: acidic | alkaline | auto")
         self.mode = mode

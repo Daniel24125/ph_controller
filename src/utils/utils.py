@@ -110,7 +110,7 @@ class IncrementalRandomGenerator:
     
 
 class DataBackupHandler:
-    def __init__(self):
+    def __init__(self, ):
         self.backup_dir = Path(os.path.join(os.getcwd(), "src/temp")) 
         
     def start_experiment(self):
@@ -155,15 +155,16 @@ class DataBackupHandler:
             import traceback
             traceback.print_exc()
     
-    def get_unsent_data(self):
-        """Retrieve unsent data for a specific channel"""
+    def get_saved_files(self): 
         if not hasattr(self, "backup_dir"): 
             return []
+        return os.listdir(self.backup_dir)
+       
         
-        all_items = os.listdir(self.backup_dir)
-        if len(all_items) == 0:
-            return []
         
+    def get_unsent_data(self):
+        """Retrieve unsent data for a specific channel"""
+        all_items = self.get_saved_files()
         unsent_data = []
         for item in all_items: 
             access_dir = os.path.join(self.backup_dir, item)

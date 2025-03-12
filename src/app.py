@@ -9,7 +9,7 @@ from operator import itemgetter
 import traceback
 import sys
 import signal
-from instruments.experiment import ExperimentHandler
+from instruments.experiment import ExperimentHandler, backup_handler
 from utils.logger import logger
 
 # Load environment variables from .env.local
@@ -21,7 +21,7 @@ sio = socketio.Client()
 
 
 def signal_handler( sig, frame):
-    print("\nShutting down gracefully...")
+    logger.info("\nShutting down gracefully...")
     cleanup()
     
 def cleanup():
@@ -101,6 +101,7 @@ class DeviceSocketClient:
         # Send initial device configuration
         sio.emit("register_client", "rpi")
         sio.emit("get_rpi_config", self.config_handler.get_config())
+        
         
 
     def _handle_disconnect(self) -> None:

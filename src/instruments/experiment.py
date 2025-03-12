@@ -14,22 +14,23 @@ from utils.utils import DataBackupHandler
 from config.config_handler import DeviceConfigHandler
 from instruments.controllers import SensorManager 
 
+backup_handler = DataBackupHandler()
+device_handler = DeviceConfigHandler()
+device = device_handler.get_config()
+timer = IntervalTimer()
+
 class ExperimentHandler: 
     def __init__(self, socket, connection_handler): 
         self.socket = socket 
         self.connection_handler = connection_handler
-        self.device_handler = DeviceConfigHandler()
-        self.device = self.device_handler.get_config()
         self.sensors = []
-        self.timer = IntervalTimer()
         self.sensor_manager = SensorManager(socket, self.send_data_to_client, self.send_log_to_client)
-        self.backup_handler = DataBackupHandler()
         self.reset_experimental_data()
 
     def reset_experimental_data(self): 
         self.experiment_data = {
             "duration": 0,
-            "deviceID": self.device["id"],
+            "deviceID": device["id"],
             "projectID": None, 
             "dataAquisitionInterval": None,
             "configurationID": None,
@@ -45,13 +46,13 @@ class ExperimentHandler:
 
     def start_experiment(self, data): 
         logger.info("Starting the experiment")
-        self.backup_handler.start_experiment()
+        backup_handler.start_experiment()
         self.initiate_sensors(data)
         self.start_experiment_timer()
 
     def pause_experiment(self, data): 
         logger.info("Pausing the experiment")
-        self.timer.stop()
+        timer.stop()
         self.sensor_manager.pause_controllers()
 
     def resume_experiment(self, data): 
@@ -62,21 +63,22 @@ class ExperimentHandler:
 
     def stop_experiment(self, data): 
         logger.info("Stoping the experiment")
-        self.timer.stop()
+        timer.stop()
         self.sensor_manager.stop_controllers()
-        self.backup_handler.cleanup_experiment()
+        backup_handler.cleanup_experiment()
         self.reset_experimental_data()
 
     def initiate_sensors(self, data): 
-        conf = self.device_handler.get_configuration_by_id(data["configurationID"])
+        conf = device_handler.get_configuration_by_id(data["configurationID"])
         if len(conf) != 1:
             raise FileNotFoundError("No config or more than one config found") 
         locations = conf[0]["locations"]
         self.sensor_manager.register_sensors(locations=locations)
         self.sensor_manager.start(dataAquisitionInterval=data["dataAquisitionInterval"])
-       
+        self.experiment_data["locations"] = [{"id": l["id"], "data": []} for l in locations]
+    
     def start_experiment_timer(self):
-        self.timer.start(1, self.update_duration)
+        timer.start(1, self.update_duration)
 
     def update_duration(self): 
         self.update_experimetal_data({"duration": self.experiment_data["duration"]+1})
@@ -85,9 +87,18 @@ class ExperimentHandler:
         })
 
     def send_data_to_client(self, data): 
-        data_points = [{**d, "x": self.experiment_data["duration"]} for d in data]
+        data_points = []
+        for i in range(len(data)):
+            location_data = data[i]
+            processed_data = {**location_data, "x": self.experiment_data["duration"]}
+            data_points.append(processed_data)
+            self.experiment_data["locations"][i]["data"].append({
+                "x": processed_data["x"], 
+                "y": processed_data["y"]
+            })
+
         self.emit("sensor_data", {
-            "deviceID": self.device["id"],
+            "deviceID": device["id"],
             "data": data_points
         })
 
@@ -107,15 +118,15 @@ class ExperimentHandler:
             **self.experiment_data, 
             **data
         }
+        if self.experiment_data["duration"]%30 == 0: 
+            backup_handler.save_data(self.experiment_data)  
+
 
     def emit(self, channel, data): 
-        # self.backup_handler.save_data(channel, data)
+        # backup_handler.save_data(channel, data)
         if self.connection_handler.connected:
             # If there's unsent data, send it first
-            unsent_data = self.backup_handler.get_unsent_data()
-            data = self.experiment_data[""]
-            if num_files%5 == 0 : 
-                self.backup_handler.save_data(self.experiment_data)  
+            unsent_data = backup_handler.get_unsent_data()
             # Now send current data
             self.socket.emit(channel, data)
         else:
