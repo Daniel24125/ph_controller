@@ -74,13 +74,13 @@ class ExperimentHandler:
         locations = self.get_experiment_locations(data["configurationID"])
         self.update_experimetal_data({
             **data,
-            "status": "busy"
+            "status": "running"
         })
         self.sensor_manager.register_sensors(locations=locations)
         self.sensor_manager.start(dataAquisitionInterval=data["dataAquisitionInterval"])
     
     def is_experiment_ongoing(self): 
-        return self.experiment_data["status"] == "busy"
+        return self.experiment_data["status"] == "running" or self.experiment_data["status"] == "busy"
 
     def get_experiment_locations(self, configurationID): 
         conf = device_handler.get_configuration_by_id(configurationID)

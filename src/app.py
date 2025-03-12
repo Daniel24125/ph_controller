@@ -101,8 +101,8 @@ class DeviceSocketClient:
         sio.emit("register_client", "rpi")
         sio.emit("get_rpi_config", config_handler.get_config())
         if self.experiment_handler.is_experiment_ongoing():
-            unsent_data = backup_handler.get_unsent_data()
-            print("UNSENT DATA: ", unsent_data)
+            unsent_data = backup_handler.get_full_backup_data()
+            sio.emit("get_ongoing_experiment_data", unsent_data)
 
 
         
