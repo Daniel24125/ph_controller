@@ -41,8 +41,6 @@ class DeviceSocketClient:
     def parseCommands(self, command_data): 
         if not isinstance(command_data, dict) or "data" not in command_data or "cmd" not in command_data: 
             raise ValueError("Command data has invalid format") 
-        if command_data["cmd"] not in commands:
-            raise ValueError(f"Unknown command: {command_data['cmd']}")
         
         commands = {
             "startExperiment": self.experiment_handler.start_experiment,
@@ -50,6 +48,10 @@ class DeviceSocketClient:
             "resumeExperiment": self.experiment_handler.resume_experiment,
             "stopExperiment": self.experiment_handler.stop_experiment
         }
+        
+        if command_data["cmd"] not in commands:
+            raise ValueError(f"Unknown command: {command_data['cmd']}")
+        
         commands[command_data["cmd"]](command_data["data"])
 
     def event_handlers_registrations(self):
@@ -58,6 +60,8 @@ class DeviceSocketClient:
         sio.on('disconnect', self._handle_disconnect)
         sio.on('updateDeviceConfig', self._handle_config_update)
         sio.on('command', self._receive_command)
+
+   
 
     def _receive_command(self, command_data): 
         logger.info(f"Command received: {command_data}")

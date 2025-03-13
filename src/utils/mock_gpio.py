@@ -32,7 +32,6 @@ class MockGPIO:
     
     def setmode(self, mode):
         """Set the pin numbering mode."""
-        print(mode)
         self._mode = mode
         print(f"GPIO Mode set to: {mode}")
     
