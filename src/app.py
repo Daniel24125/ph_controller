@@ -12,11 +12,6 @@ import signal
 from instruments.experiment import ExperimentHandler, backup_handler
 from utils.logger import logger
 
-# Load environment variables from .env.local
-env_path = Path('/.env.local')
-load_dotenv(dotenv_path=env_path)
-
-
 sio = socketio.Client()
 
 
@@ -38,14 +33,17 @@ validator = Validator()
 class DeviceSocketClient:
 
     def __init__(self,server_url: str = None):
-        self.server_url = server_url or os.getenv('SOCKET_SERVER_URL')
+        self.server_url = server_url 
         self.connected = False
         self.event_handlers_registrations()
         self.experiment_handler = ExperimentHandler(sio, connection_handler=self)
 
     def parseCommands(self, command_data): 
-        if "data" not in command_data or "cmd" not in command_data: 
-            raise ValueError("Command data with the wrong format") 
+        if not isinstance(command_data, dict) or "data" not in command_data or "cmd" not in command_data: 
+            raise ValueError("Command data has invalid format") 
+        if command_data["cmd"] not in commands:
+            raise ValueError(f"Unknown command: {command_data['cmd']}")
+        
         commands = {
             "startExperiment": self.experiment_handler.start_experiment,
             "pauseExperiment": self.experiment_handler.pause_experiment,
@@ -68,7 +66,7 @@ class DeviceSocketClient:
         except Exception as err: 
             self.report_error(err)
             
-    def appy_cmd(self, cmd):
+    def apply_cmd(self, cmd):
         """Applies the received command after validation"""
         cmd_pipline={
             "device|update": {"fn": config_handler.update_device_info, "args": None},
@@ -104,10 +102,6 @@ class DeviceSocketClient:
             unsent_data = backup_handler.get_full_backup_data()
             sio.emit("get_ongoing_experiment_data", unsent_data)
 
-
-        
-        
-
     def _handle_disconnect(self) -> None:
         """Handle disconnection from server."""
         self.connected = False
@@ -133,7 +127,7 @@ class DeviceSocketClient:
         try:
             logger.info(f"Received config update: {cmd}")
             validator.validateConfigOperationCommand(cmd)
-            self.appy_cmd(cmd)
+            self.apply_cmd(cmd)
             sio.emit("refresh_device_data", config_handler.get_config())
         except Exception as e:
             logger.error(traceback.format_exc())
@@ -154,7 +148,8 @@ class DeviceSocketClient:
         """Disconnect from the Socket.IO server."""
         if self.connected:
             sio.disconnect()
-    
+
+
     def start(self) -> None:
         """Start the Socket.IO client with automatic reconnection."""
         while True:
@@ -181,5 +176,5 @@ if __name__ == "__main__":
         socket.start()
     except KeyboardInterrupt:
         logger.info("Disconnecting from the server") 
-        socket.cleanup() 
+        cleanup() 
  
