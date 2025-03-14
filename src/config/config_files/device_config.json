@@ -19,7 +19,7 @@
               "mode": "acidic",
               "margin": 0.1,
               "maxValveTimeOpen": 30,
-              "targetPh": 3.0,
+              "targetPh": "3",
               "devicePort": "i4",
               "checkInterval": 10,
               "configurationID": "eb90fc2d-8b47-4ce7-b0f5-0ae2b988856c",
@@ -27,7 +27,8 @@
               "id": "097f8867-87f4-4821-8d35-40ce5ff1fa52",
               "createdAt": "2025-02-20T10:33:30.410Z",
               "sensorID": "097f8867-87f4-4821-8d35-40ce5ff1fa52",
-              "lastUpdatedAt": "2025-03-14T13:42:00.499Z"
+              "lastUpdatedAt": "2025-03-14T14:38:56.057Z",
+              "phMonitorFrequency": "30"
             }
           ]
         }

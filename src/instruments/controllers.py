@@ -3,7 +3,7 @@ import time
 import sys 
 from pathlib import Path
 import threading
-from datetime import datetime
+
 
 # Add parent directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -14,6 +14,7 @@ except ImportError:
     GPIO = MockGPIO()
 
 from utils.utils import  AnalogCommunication
+from utils.logger import logger
 from config.config_handler import DeviceInputMappingHandler, DeviceConfigHandler
 
 
@@ -34,9 +35,9 @@ class PHController:
     """
     def __init__(self, location, send_log_to_client, update_client_pump_status, device_port, target_ph, max_pump_time=30, margin=0.1, mode="acidic"):
         self.device_port = device_port
-        self.target_ph = target_ph
-        self.max_pump_time = max_pump_time
-        self.margin = margin
+        self.target_ph = float(target_ph)
+        self.max_pump_time = float(max_pump_time)
+        self.margin = float(margin)
         self.mode = mode
         self.send_log_to_client = send_log_to_client
         self.update_client_pump_status = update_client_pump_status
@@ -68,10 +69,11 @@ class PHController:
         try: 
             return self.comunicator.get_read()
         except Exception as err: 
-            print(err)
+            logger.error(err)
             self.send_log_to_client("error", "An error occured while trying to aquire pH data: {err}", self.location )
             
     def calculate_pump_time(self, current_ph):
+
         ph_difference = abs(self.target_ph - current_ph)
         # Scale the pump time based on pH difference, max 10 seconds
         pump_time = min(ph_difference * 2, self.max_pump_time)
@@ -82,11 +84,11 @@ class PHController:
         define_base_pump = self.mode == "alkaline" or self.mode == "auto"
         define_acid_pump = self.mode == "acidic" or self.mode == "auto"
         if is_acidic and define_base_pump:
-            print("Base pump activated!")
+            logger.info("Base pump activated!")
             pump_pin = self.alkaline_pump_pin
             pump = "alkaline"
         elif not is_acidic and define_acid_pump:
-            print("Acidic pump activated!")
+            logger.info("Acidic pump activated!")
             pump_pin = self.acidic_pump_pin
             pump = "acidic"
         else:
@@ -94,10 +96,12 @@ class PHController:
         return (pump, pump_pin)
 
     def adjust_ph(self):
+        logger.info("Checking the current pH")
         current_ph = self.read_ph()
         if self.target_ph - self.margin <= current_ph <= self.target_ph + self.margin:
-            print("pH value with the margin values. No adjustment necessary")
+            logger.info("pH value with the margin values. No adjustment necessary")
             return
+        
         pump, pump_pin = self.determine_pump(current_ph)
         if not pump_pin: 
             return 
@@ -118,7 +122,7 @@ class PHController:
     def activate_pump(self, pump_pin, pump_time):
         self.update_client_pump_status(self.location, "acidic" if pump_pin==self.acidic_pump_pin else self.alkaline_pump_pin, True)
         self.send_log_to_client("info", f"Pumping for {round(pump_time,2)} seconds", self.location)
-        print(f"Pumping for {round(pump_time,2)} seconds")
+        logger.info(f"Pumping for {round(pump_time,2)} seconds")
         GPIO.output(pump_pin, GPIO.HIGH)
         time.sleep(pump_time)
         GPIO.output(pump_pin, GPIO.LOW)
@@ -126,7 +130,6 @@ class PHController:
         self.send_log_to_client("info", "Closing valve",self.location)
         
     def toggle_pump(self, pump, overide_status=None): 
-        print(self.alkaline_pump_pin)
         if pump == "acidic": 
             if overide_status != None: 
                 self.is_pumping_acid = not overide_status
@@ -148,8 +151,9 @@ class PHController:
     def stop(self): 
         self.is_running = False
         GPIO.cleanup()
-        print("Monitorization stopped")
+        logger.info("Monitorization stopped")
  
+device_handler = DeviceConfigHandler()
 
 class SensorManager: 
     def __init__(self, socket, send_data, send_log):
@@ -159,7 +163,7 @@ class SensorManager:
         self.socket = socket
         self.send_log_to_client = send_log
         self._register_device_listenners()
-        self.device = DeviceConfigHandler().get_config()
+        self.device = device_handler.get_config()
 
     def _register_device_listenners(self):
         self.socket.on("toggle_pump", self._toggle_pump)
@@ -183,9 +187,8 @@ class SensorManager:
 
         pump, status = sensor.toggle_pump(pump_type, status)
 
-
     def update_client_pump_status(self, location, pump, status): 
-        print("Sending client the pump status")
+        logger.info("Sending client the pump status")
         self.socket.emit("update_pump_status", {
             "deviceID": self.device["id"],
             "location": location ,
@@ -213,31 +216,40 @@ class SensorManager:
             self.controllers.append(controler)
     
     def start(self, dataAquisitionInterval):
-        print("Starting the Timer")
+        logger.info("Starting the Timer")
         if not hasattr(self, "dataAquisitionInterval"): 
-            self.dataAquisitionInterval = dataAquisitionInterval
+            self.dataAquisitionInterval = int(dataAquisitionInterval)
+       
         self.is_running = True
-        self.thread = threading.Thread(target=self.run_controllers, args=(self.dataAquisitionInterval,))
+        self.thread = threading.Thread(target=self.run_controllers)
         self.thread.start()
 
-    def run_controllers(self, dataAquisitionInterval): 
+    def run_controllers(self): 
+        time_ellapsed = 0
         try:
             while self.is_running:
                 send_data = []
-                for con in self.controllers: 
+                for i in range(len(self.controllers)): 
+                    con = self.controllers[i]
                     controler = con["controler"]
-                    read = controler.read_ph()
-                    send_data.append({
-                        "id": con["location"]["id"],
-                        "y": read
-                    })
-                    controler.adjust_ph()
-                self.send_data(send_data)
-                time.sleep(int(dataAquisitionInterval))
+                    phMonitorFrequency = int(con["location"]["sensors"][0]["phMonitorFrequency"])
+                    if time_ellapsed%self.dataAquisitionInterval == 0:
+                        read = controler.read_ph()
+                        send_data.append({
+                            "id": con["location"]["id"],
+                            "y": read
+                        })
+
+                    if time_ellapsed%phMonitorFrequency == 0:
+                        controler.adjust_ph()
+                if time_ellapsed%self.dataAquisitionInterval == 0:
+                    self.send_data(send_data)
+                time.sleep(1)
+                time_ellapsed = time_ellapsed + 1
         except Exception as err:
-            print(err)
+            logger.error(err)
             GPIO.cleanup()
-            print("Operation aborted by the user...")
+            logger.info("Operation aborted by the user...")
             self.send_log_to_client("error", f"An error occured during data aquisition: {err}", "Device")
            
     def pause_controllers(self): 
@@ -247,7 +259,7 @@ class SensorManager:
         self.is_running = False
         self.controllers = []
         GPIO.cleanup()
-        print("Monitorization stopped")
+        logger.info("Monitorization stopped")
 
    
 
@@ -266,7 +278,6 @@ if __name__ == "__main__":
     while True: 
         for controller in probes: 
             read = controller.read_ph()
-            print(read)
         time.sleep(2)
     
     #controller.port_mapper.set_calibration_value(probe, "acidic_value", read)

@@ -35,6 +35,7 @@ class ExperimentHandler:
             "deviceID": device["id"],
             "projectID": None, 
             "dataAquisitionInterval": None,
+            "phMonitorFrequency": None,
             "configurationID": None,
             "userID": None,
             "status": "ready",
@@ -79,6 +80,7 @@ class ExperimentHandler:
         self.sensor_manager.register_sensors(locations=locations)
         self.sensor_manager.start(dataAquisitionInterval=data["dataAquisitionInterval"])
     
+  
     def is_experiment_ongoing(self): 
         return self.experiment_data["status"] == "running" or self.experiment_data["status"] == "busy"
 
