@@ -116,14 +116,13 @@ class PHController:
             self.is_pumping_base = False
         
     def activate_pump(self, pump_pin, pump_time):
+        self.update_client_pump_status(self.location, "acidic" if pump_pin==self.acidic_pump_pin else self.alkaline_pump_pin, True)
         self.send_log_to_client("info", f"Pumping for {round(pump_time,2)} seconds", self.location)
-        self.update_client_pump_status()
         print(f"Pumping for {round(pump_time,2)} seconds")
         GPIO.output(pump_pin, GPIO.HIGH)
-        self.update_client_pump_status("acidic" if pump_pin==self.acidic_pump_pin else self.alkaline_pump_pin, True)
         time.sleep(pump_time)
         GPIO.output(pump_pin, GPIO.LOW)
-        self.update_client_pump_status("acidic" if pump_pin==self.acidic_pump_pin else self.alkaline_pump_pin, False)
+        self.update_client_pump_status(self.location, "acidic" if pump_pin==self.acidic_pump_pin else self.alkaline_pump_pin, False)
         self.send_log_to_client("info", "Closing valve",self.location)
         
     def toggle_pump(self, pump, overide_status=None): 
@@ -183,15 +182,15 @@ class SensorManager:
         ) 
 
         pump, status = sensor.toggle_pump(pump_type, status)
-        # self.update_client_pump_status(loc, pump, status)
+
 
     def update_client_pump_status(self, location, pump, status): 
         print("Sending client the pump status")
         self.socket.emit("update_pump_status", {
             "deviceID": self.device["id"],
-            "location":location ,
-            "pump":pump ,
-            "status":status ,
+            "location": location ,
+            "pump": pump ,
+            "status": status ,
         })
 
     def register_sensors(self, locations): 

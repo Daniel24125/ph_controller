@@ -31,7 +31,7 @@ class Validator:
             'mode': str,
             'margin': (int, float),
             'maxValveTimeOpen': (int, float),
-            'targetPh': (int, float),
+            # 'targetPh': (int, float),
             'devicePort': str,
             'checkInterval': (int, float),
             'createdAt': str
@@ -55,7 +55,7 @@ class Validator:
         if not (1 < sensor['maxValveTimeOpen'] <= 300):
             logger.error("Invalid maxValveTimeOpen value")
             return False
-        if not (1 <= sensor['targetPh'] <= 14):
+        if not (1 <= float(sensor['targetPh']) <= 14):
             logger.error("Invalid targetPh value")
             return False
 
