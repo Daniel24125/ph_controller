@@ -1,16 +1,13 @@
 
 import socketio
 from typing import Dict, Any
-from pathlib import Path
-import os
-from dotenv import load_dotenv, dotenv_values
-from config.config_handler import DeviceConfigHandler, Validator
 from operator import itemgetter
 import traceback
 import sys
 import signal
 from instruments.experiment import ExperimentHandler, backup_handler
 from utils.logger import logger
+from settings import config_handler, validator
 
 sio = socketio.Client()
 
@@ -27,8 +24,6 @@ def cleanup():
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM,signal_handler)
 
-config_handler = DeviceConfigHandler()
-validator = Validator()
 
 class DeviceSocketClient:
 

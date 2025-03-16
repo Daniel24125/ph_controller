@@ -7,17 +7,8 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from datetime import datetime
-
-from utils.logger import logger
-from utils.timer import IntervalTimer
-from utils.utils import DataBackupHandler
-from config.config_handler import DeviceConfigHandler
 from instruments.controllers import SensorManager 
-
-backup_handler = DataBackupHandler()
-device_handler = DeviceConfigHandler()
-device = device_handler.get_config()
-timer = IntervalTimer()
+from settings import backup_handler, device, timer, device_handler, logger
 
 DATA_BACKUP_PERIOD = 10
 

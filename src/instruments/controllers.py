@@ -14,9 +14,7 @@ except ImportError:
     GPIO = MockGPIO()
 
 from utils.utils import  AnalogCommunication
-from utils.logger import logger
-from config.config_handler import DeviceInputMappingHandler, DeviceConfigHandler
-
+from settings import port_mapper, logger, device_handler
 
 class PHController:
     """
@@ -49,10 +47,9 @@ class PHController:
         self.is_running = False
         self.is_pumping_acid = False
         self.is_pumping_base = False
-        self.port_mapper = DeviceInputMappingHandler()
-        self.alkaline_pump_pin, self.acidic_pump_pin = self.port_mapper.get_pump_pins(self.device_port)
+        self.alkaline_pump_pin, self.acidic_pump_pin = port_mapper.get_pump_pins(self.device_port)
         self.comunicator = AnalogCommunication(
-            sensor_config=self.port_mapper.get_input_number(self.device_port)
+            sensor_config=port_mapper.get_input_number(self.device_port)
         )
 
     def set_mode(self, mode):
@@ -153,7 +150,6 @@ class PHController:
         GPIO.cleanup()
         logger.info("Monitorization stopped")
  
-device_handler = DeviceConfigHandler()
 
 class SensorManager: 
     def __init__(self, socket, send_data, send_log):
