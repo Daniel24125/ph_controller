@@ -7,7 +7,7 @@ import sys
 import signal
 from instruments.experiment import ExperimentHandler, backup_handler
 from utils.logger import logger
-from settings import config_handler, validator
+from settings import config_handler, validator, error_logger
 
 sio = socketio.Client()
 
@@ -163,6 +163,7 @@ class DeviceSocketClient:
 
     def report_error(self, err): 
         logger.error(f"An error occured in a device command: {err}")
+        error_logger.log_error(err)
         sio.emit("error", {
             "message": f"An error occured in a device command: {err}",
             "device_id": config_handler.get_config()["id"]
