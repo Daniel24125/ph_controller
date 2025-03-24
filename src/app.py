@@ -9,7 +9,13 @@ from instruments.experiment import ExperimentHandler, backup_handler
 from utils.logger import logger
 from settings import config_handler, validator, error_logger
 
-sio = socketio.Client()
+sio = socketio.Client(
+    reconnection=True,
+    reconnection_attempts=float('inf'),  # Unlimited reconnection attempts
+    reconnection_delay=1,     # Initial delay
+    reconnection_delay_max=30,  # Maximum delay between reconnections
+    randomization_factor=0.5   # Add some jitter to reconnection timing
+)
 
 
 def signal_handler( sig, frame):
@@ -130,18 +136,14 @@ class DeviceSocketClient:
             sio.emit("refresh_device_data", config_handler.get_config())
         except Exception as e:
             logger.error(traceback.format_exc())
-            logger.error(f"Error handling config update: {e}")
-            sio.emit('error', {
-                'message': str(e),
-                'device_id': config_handler.get_config().get('id')
-            })
+            self.report_error(f"Error handling config update: {e}")
 
     def connect(self) -> None:
         """Connect to the Socket.IO server."""
         try:
             sio.connect(self.server_url)
         except Exception as e:
-            logger.error(f"Connection error: {e}")
+            self.report_error(f"Connection error: {e}")
 
     def disconnect(self) -> None:
         """Disconnect from the Socket.IO server."""
@@ -157,22 +159,24 @@ class DeviceSocketClient:
                     self.connect()
                 sio.sleep(1)
             except Exception as e:
-                logger.error(f"Error in client: {e}")
+                self.report_error(f"Error in client: {e}")
                 if self.connected:
                     cleanup()
 
     def report_error(self, err): 
         logger.error(f"An error occured in a device command: {err}")
         error_logger.log_error(err)
-        sio.emit("error", {
-            "message": f"An error occured in a device command: {err}",
-            "device_id": config_handler.get_config()["id"]
-        })
+        if self.connected:
+            sio.emit("error", {
+                "message": f"An error occured in a device command: {err}",
+                "device_id": config_handler.get_config()["id"]
+            })
 
 if __name__ == "__main__": 
     try:
         # socket = DeviceSocketClient(server_url="http://localhost:8000")
-        socket = DeviceSocketClient(server_url="https://sensormonitorss.onrender.com")
+        # socket = DeviceSocketClient(server_url="https://sensormonitorss.onrender.com")
+        socket = DeviceSocketClient(server_url="https://cheerful-luci-daniel-projects-252ddbbb.koyeb.app")
         socket.start()
     except KeyboardInterrupt:
         logger.info("Disconnecting from the server") 
