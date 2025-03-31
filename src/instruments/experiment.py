@@ -10,7 +10,7 @@ from datetime import datetime
 from instruments.controllers import SensorManager 
 from settings import backup_handler, device, timer, device_handler, logger
 
-DATA_BACKUP_PERIOD = 10
+DATA_BACKUP_PERIOD = 60
 
 class ExperimentHandler: 
     def __init__(self, socket, connection_handler): 
@@ -113,7 +113,7 @@ class ExperimentHandler:
         })
 
     def send_log_to_client(self, type, desc, location): 
-        print("Sending log to client from location: ", location)
+        logger.info(f"Sending log to client from location: {location}")
         log ={
             # "id": uuid.uuid4(),
             "type": type,
