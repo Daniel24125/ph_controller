@@ -260,21 +260,46 @@ class SensorManager:
    
 
 if __name__ == "__main__":
-    pass
-     # Usage example:
+    
     probe = "i4"
-    probes = [ PHController(
-        location=None, 
-        send_log_to_client=None,
-        device_port=probe, 
-        target_ph=7.0, 
-        mode="acidic"
-    )]
+    #probes = [ PHController(
+    #    location=None, 
+    #    send_log_to_client=None,
+    #    device_port=probe, 
+    #    target_ph=7.0, 
+    #    mode="acidic",
+    #    update_client_pump_status=lambda x: print("Update pump status")
+    #)]
 
-    while True: 
-        for controller in probes: 
-            read = controller.read_ph()
-        time.sleep(2)
+    #controler = PHController(
+    #    location=None, 
+    #    send_log_to_client=None,
+    #    device_port=probe, 
+    #    target_ph=7.0, 
+    #    mode="acidic",
+    #    update_client_pump_status=lambda x: print("Update pump status")
+    #)
+
+    pump_pin=2
+    pump_time=2
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(pump_pin, GPIO.OUT)
+    GPIO.output(pump_pin, GPIO.HIGH)
+
+    print(f"activating pin {pump_pin}")
+    GPIO.output(pump_pin, GPIO.LOW)
+    time.sleep(pump_time)
+    GPIO.output(pump_pin, GPIO.HIGH)
+    
+    
+    print(f"turning off pin {pump_pin}")
+
+    GPIO.cleanup()
+    #while True: 
+     #   for controller in probes: 
+      #      read = controller.read_ph()
+      #      print(read)
+      #  time.sleep(2)
     
     #controller.port_mapper.set_calibration_value(probe, "acidic_value", read)
     
