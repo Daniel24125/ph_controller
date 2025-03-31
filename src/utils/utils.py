@@ -19,8 +19,10 @@ except Exception:
     simulation_mode = True
 
 
-
+i2c = busio.I2C(board.SCL, board.SDA)
+ads = ADS.ADS1115(i2c)
 port_map = [ADS.P0, ADS.P1, ADS.P2, ADS.P3]
+random_gen = IncrementalRandomGenerator(3000,16000,50)
 
 def get_config():
     try:
@@ -41,7 +43,6 @@ class AnalogCommunication:
         self.analog_read = 0
         self.converted_read = 0
         self.ready = True
-        self.random_gen = IncrementalRandomGenerator(3000,16000,50)
    
    
     def get_regression_params(self): 
@@ -56,21 +57,23 @@ class AnalogCommunication:
 
     # This method is responsible for getting an analog read of the sensors. The read value corresponds to an average of 20 reads (i.e., 20 by default)
     def get_read(self, NUM_MEAS_FOR_AVG=20):
-
+        print("Getting Analog value")
         self.ready=False
         analog_values = np.zeros(NUM_MEAS_FOR_AVG)
         for i in range(NUM_MEAS_FOR_AVG):
 
             try: 
                 if simulation_mode:
-                    an_read = self.random_gen.get_next()
+                    an_read = random_gen.get_next()
                 else:     
-                    i2c = busio.I2C(board.SCL, board.SDA)
-                    an_read = AnalogIn(ADS.ADS1115(i2c), self.sensor_config["probe"]).value
+                    probe = self.sensor_config["probe"]
+                    an_read = AnalogIn(ads, port_map[probe]).value
+                    
                 analog_values[i] = an_read
             except Exception as err: 
                 print(err)
                 pass
+        
         mask = np.ma.masked_equal(analog_values,0).compressed()
         analog_avg = np.average(mask)
         self.ready=True
@@ -218,6 +221,5 @@ class DataBackupHandler:
         
 
 if __name__ == "__main__": 
-    backup = DataBackupHandler()
-    unsent_data = backup.get_full_backup_data()
-    print(unsent_data)
+    an_read = AnalogIn(ads, ADS.P3).value
+    print(an_read)

@@ -64,6 +64,7 @@ class PHController:
 
     def read_ph(self):
         try: 
+            logger.info("Getting the current pH value...")
             return self.comunicator.get_read()
         except Exception as err: 
             logger.error(err)
@@ -95,6 +96,7 @@ class PHController:
     def adjust_ph(self):
         logger.info("Checking the current pH")
         current_ph = self.read_ph()
+        logger.info(f"Current pH: {current_ph}")
         if self.target_ph - self.margin <= current_ph <= self.target_ph + self.margin:
             logger.info("pH value with the margin values. No adjustment necessary")
             return
@@ -271,29 +273,17 @@ if __name__ == "__main__":
     #    update_client_pump_status=lambda x: print("Update pump status")
     #)]
 
-    #controler = PHController(
-    #    location=None, 
-    #    send_log_to_client=None,
-    #    device_port=probe, 
-    #    target_ph=7.0, 
-    #    mode="acidic",
-    #    update_client_pump_status=lambda x: print("Update pump status")
-    #)
-
-    pump_pin=2
-    pump_time=2
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(pump_pin, GPIO.OUT)
-    GPIO.output(pump_pin, GPIO.HIGH)
-
-    print(f"activating pin {pump_pin}")
-    GPIO.output(pump_pin, GPIO.LOW)
-    time.sleep(pump_time)
-    GPIO.output(pump_pin, GPIO.HIGH)
+    controler = PHController(
+        location=None, 
+        send_log_to_client=None,
+        device_port=probe, 
+        target_ph=7.0, 
+        mode="acidic",
+        update_client_pump_status=lambda x: print("Update pump status")
+    )
+    #controler.adjust_ph()
+    controler.read_ph()
     
-    
-    print(f"turning off pin {pump_pin}")
-
     GPIO.cleanup()
     #while True: 
      #   for controller in probes: 

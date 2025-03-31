@@ -1,29 +1,29 @@
 {
   "i1": {
     "probe": 0,
-    "acidic": 9,
-    "alkaline": 11,
+    "acidic": 17,
+    "alkaline": 27,
     "acidic_value": 0,
     "alkaline_value": 0
   },
   "i2": {
     "probe": 1,
-    "acidic": 13,
-    "alkaline": 15,
+    "acidic": 22,
+    "alkaline": 23,
     "acidic_value": 0,
     "alkaline_value": 0
   },
   "i3": {
     "probe": 2,
-    "acidic": 16,
-    "alkaline": 18,
+    "acidic": 24,
+    "alkaline": 25,
     "acidic_value": 0,
     "alkaline_value": 0
   },
   "i4": {
     "probe": 3,
-    "acidic": 19,
-    "alkaline": 21,
+    "acidic": 10,
+    "alkaline": 9,
     "acidic_value": 4340.8,
     "alkaline_value": 15076.8
   }
