@@ -7,7 +7,10 @@ import sys
 import signal
 from instruments.experiment import ExperimentHandler, backup_handler
 from utils.logger import logger
-from settings import config_handler, validator, error_logger
+from settings import config_handler, validator, error_logger, SERVER_URL, TIMEOUT, INTERVAL_MINUTES, PING_URL
+import time 
+import requests
+
 
 sio = socketio.Client(
     reconnection=True,
@@ -17,6 +20,32 @@ sio = socketio.Client(
     randomization_factor=0.5   # Add some jitter to reconnection timing
 )
 
+def ping_server():
+    """
+    Ping a server URL and log the response.
+    
+    Returns:
+        bool: True if ping was successful, False otherwise
+    """
+    try:
+        response = requests.get(PING_URL, timeout=TIMEOUT)
+        
+        if response.status_code == 200:
+            logger.info(f"Successfully pinged {PING_URL} - Status: {response.status_code}")
+            return True
+        else:
+            logger.warning(f"Ping to {PING_URL} returned status code {response.status_code}")
+            return False
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to ping {PING_URL}: {str(e)}")
+        return False
+
+
+def keep_server_alive():
+     while True:
+        ping_server()
+        # Sleep for the specified interval
+        time.sleep(INTERVAL_MINUTES * 60)
 
 def signal_handler( sig, frame):
     logger.info("\nShutting down gracefully...")
@@ -111,6 +140,18 @@ class DeviceSocketClient:
         """Handle disconnection from server."""
         self.connected = False
         logger.info("Disconnected from server")
+        # self.reconnect_to_server()
+
+    def reconnect_to_server(self):
+        logger.info("Trying to reconnect...")
+ 
+        tries = 10
+        current_attempts = 0
+        while tries > current_attempts: 
+            self.connect()
+            current_attempts = current_attempts + 1
+            time.sleep(10)
+            
 
     def _handle_config_update(self, cmd: Dict[str, Any]) -> None:
         """
@@ -141,12 +182,13 @@ class DeviceSocketClient:
     def connect(self) -> None:
         """Connect to the Socket.IO server."""
         try:
-            sio.connect(self.server_url)
+            sio.connect(self.server_url, retry=True)
         except Exception as e:
             self.report_error(f"Connection error: {e}")
 
     def disconnect(self) -> None:
         """Disconnect from the Socket.IO server."""
+     
         if self.connected:
             sio.disconnect()
 
@@ -172,12 +214,18 @@ class DeviceSocketClient:
                 "device_id": config_handler.get_config()["id"]
             })
 
+import threading
+
 if __name__ == "__main__": 
     try:
         # socket = DeviceSocketClient(server_url="http://localhost:8000")
-        # socket = DeviceSocketClient(server_url="https://sensormonitorss.onrender.com")
-        socket = DeviceSocketClient(server_url="https://cheerful-luci-daniel-projects-252ddbbb.koyeb.app")
+        socket = DeviceSocketClient(server_url=SERVER_URL)
+        # socket = DeviceSocketClient(server_url="https://cheerful-luci-daniel-projects-252ddbbb.koyeb.app")
+        thread = threading.Thread(target=keep_server_alive)
+        
+        thread.start()
         socket.start()
+
     except KeyboardInterrupt:
         logger.info("Disconnecting from the server") 
         cleanup() 

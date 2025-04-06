@@ -9,4 +9,5 @@ pymongo
 python-dotenv
 python-socketio[client]
 uuid
-RPi.GPIO
+requests
+schedule
