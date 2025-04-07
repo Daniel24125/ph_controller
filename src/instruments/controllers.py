@@ -16,9 +16,8 @@ except ImportError:
 from utils.utils import  AnalogCommunication
 from settings import port_mapper, logger, device_handler
 
-GPIO.cleanup()
-print("Setting GPIO mode")
-GPIO.setmode(GPIO.BCM)
+
+gpio_lock = threading.Lock()
 
 
 class PHController:
@@ -63,7 +62,9 @@ class PHController:
         self.mode = mode
 
     def init_gpio(self):  
-
+        print("Setting GPIO mode.")
+        GPIO.setmode(GPIO.BCM)
+        GPIO.cleanup()
         GPIO.setup(self.alkaline_pump_pin, GPIO.OUT)
         GPIO.setup(self.acidic_pump_pin, GPIO.OUT)
 
@@ -123,15 +124,21 @@ class PHController:
             self.is_pumping_base = False
         
     def activate_pump(self, pump_pin, pump_time):
-        self.update_client_pump_status(self.location, "acidic" if pump_pin==self.acidic_pump_pin else self.alkaline_pump_pin, True)
-        self.send_log_to_client("info", f"Pumping for {round(pump_time,2)} seconds", self.location)
+        self.send_client_pump_information(pump_pin, f"Pumping for {round(pump_time,2)} seconds", True)
         logger.info(f"Pumping for {round(pump_time,2)} seconds")
-        GPIO.output(pump_pin, GPIO.HIGH)
-        time.sleep(pump_time)
-        GPIO.output(pump_pin, GPIO.LOW)
-        self.update_client_pump_status(self.location, "acidic" if pump_pin==self.acidic_pump_pin else self.alkaline_pump_pin, False)
-        self.send_log_to_client("info", "Closing valve",self.location)
+        print("GPIO PIN: ",pump_pin)
+        with gpio_lock:  
+            GPIO.output(pump_pin, GPIO.LOW)
+            time.sleep(pump_time)
+            GPIO.output(pump_pin, GPIO.HIGH)
+        self.send_client_pump_information(pump_pin, "Closing valve", False)
         
+        
+    def send_client_pump_information(self, pump_pin, log, status): 
+        self.update_client_pump_status(self.location, "acidic" if pump_pin==self.acidic_pump_pin else self.alkaline_pump_pin, status)
+        self.send_log_to_client("info", log, self.location)
+
+
     def toggle_pump(self, pump, overide_status=None): 
         if pump == "acidic": 
             if overide_status != None: 
@@ -269,16 +276,11 @@ def notifiy_client(x,y,z):
 
 if __name__ == "__main__":
     try:
+        #pump_pin = 10
+        #pump_time = 1
         probe = "i4"
-        #probes = [ PHController(
-        #    location=None, 
-        #    send_log_to_client=None,
-        #    device_port=probe, 
-        #    target_ph=7.0, 
-        #    mode="acidic",
-        #    update_client_pump_status=lambda x: print("Update pump status")
-        #)]
-
+        #GPIO.setmode(GPIO.BCM)
+        
         controler = PHController(
             location=None, 
             send_log_to_client=notifiy_client,
@@ -287,15 +289,11 @@ if __name__ == "__main__":
             mode="acidic",
             update_client_pump_status=notifiy_client
         )
-        controler.adjust_ph()
-        #controler.read_ph()
         
-        GPIO.cleanup()
-        #while True: 
-         #   for controller in probes: 
-          #      read = controller.read_ph()
-          #      print(read)
-          #  time.sleep(2)
+        
+        controler.adjust_ph()
+        
+       
         
         #controller.port_mapper.set_calibration_value(probe, "acidic_value", read)
         

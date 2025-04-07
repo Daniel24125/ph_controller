@@ -18,8 +18,8 @@ try:
     i2c = busio.I2C(board.SCL, board.SDA)
     ads = ADS.ADS1115(i2c)
 
-except Exception: 
-    print("Activating simulation mode...")
+except Exception as err: 
+    print("Activating simulation mode...", err)
     simulation_mode = True
 
 port_map = [ADS.P0, ADS.P1, ADS.P2, ADS.P3]
