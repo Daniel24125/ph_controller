@@ -16,6 +16,11 @@ except ImportError:
 from utils.utils import  AnalogCommunication
 from settings import port_mapper, logger, device_handler
 
+GPIO.cleanup()
+print("Setting GPIO mode")
+GPIO.setmode(GPIO.BCM)
+
+
 class PHController:
     """
         PHController class to monitor and control the pH of an aquous solution
@@ -58,7 +63,7 @@ class PHController:
         self.mode = mode
 
     def init_gpio(self):  
-        GPIO.setmode(GPIO.BCM)
+
         GPIO.setup(self.alkaline_pump_pin, GPIO.OUT)
         GPIO.setup(self.acidic_pump_pin, GPIO.OUT)
 
@@ -100,7 +105,6 @@ class PHController:
         if self.target_ph - self.margin <= current_ph <= self.target_ph + self.margin:
             logger.info("pH value with the margin values. No adjustment necessary")
             return
-        
         pump, pump_pin = self.determine_pump(current_ph)
         if not pump_pin: 
             return 
@@ -259,37 +263,42 @@ class SensorManager:
         GPIO.cleanup()
         logger.info("Monitorization stopped")
 
-   
+
+def notifiy_client(x,y,z): 
+    print("Notifiy the client")
 
 if __name__ == "__main__":
-    
-    probe = "i4"
-    #probes = [ PHController(
-    #    location=None, 
-    #    send_log_to_client=None,
-    #    device_port=probe, 
-    #    target_ph=7.0, 
-    #    mode="acidic",
-    #    update_client_pump_status=lambda x: print("Update pump status")
-    #)]
+    try:
+        probe = "i4"
+        #probes = [ PHController(
+        #    location=None, 
+        #    send_log_to_client=None,
+        #    device_port=probe, 
+        #    target_ph=7.0, 
+        #    mode="acidic",
+        #    update_client_pump_status=lambda x: print("Update pump status")
+        #)]
 
-    controler = PHController(
-        location=None, 
-        send_log_to_client=None,
-        device_port=probe, 
-        target_ph=7.0, 
-        mode="acidic",
-        update_client_pump_status=lambda x: print("Update pump status")
-    )
-    #controler.adjust_ph()
-    controler.read_ph()
-    
-    GPIO.cleanup()
-    #while True: 
-     #   for controller in probes: 
-      #      read = controller.read_ph()
-      #      print(read)
-      #  time.sleep(2)
-    
-    #controller.port_mapper.set_calibration_value(probe, "acidic_value", read)
-    
+        controler = PHController(
+            location=None, 
+            send_log_to_client=notifiy_client,
+            device_port=probe, 
+            target_ph=3.0, 
+            mode="acidic",
+            update_client_pump_status=notifiy_client
+        )
+        controler.adjust_ph()
+        #controler.read_ph()
+        
+        GPIO.cleanup()
+        #while True: 
+         #   for controller in probes: 
+          #      read = controller.read_ph()
+          #      print(read)
+          #  time.sleep(2)
+        
+        #controller.port_mapper.set_calibration_value(probe, "acidic_value", read)
+        
+
+    except: 
+        GPIO.cleanup()
