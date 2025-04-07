@@ -8,20 +8,38 @@ import numpy as np
 from scipy import stats
 import random 
 
+
 simulation_mode= False
 try: 
     import adafruit_ads1x15.ads1115 as ADS
     from adafruit_ads1x15.analog_in import AnalogIn
     import busio
     import board 
+    
+    i2c = busio.I2C(board.SCL, board.SDA)
+    ads = ADS.ADS1115(i2c)
 except Exception: 
     print("Activating simulation mode...")
     simulation_mode = True
 
 
-i2c = busio.I2C(board.SCL, board.SDA)
-ads = ADS.ADS1115(i2c)
+
 port_map = [ADS.P0, ADS.P1, ADS.P2, ADS.P3]
+
+class IncrementalRandomGenerator:
+    def __init__(self, min_val=0, max_val=7, increment=0.1):
+        self.min = min_val
+        self.max = max_val
+        self.increment = increment
+        self.current = random.uniform(min_val, max_val)
+    
+    def get_next(self):
+        direction = random.choice([-1, 1])
+        self.current += direction * self.increment
+        self.current = max(self.min, min(self.max, self.current))
+        return round(self.current, 2)
+    
+    
 random_gen = IncrementalRandomGenerator(3000,16000,50)
 
 def get_config():
@@ -98,18 +116,7 @@ class AnalogCommunication:
             self.error=True
 
 
-class IncrementalRandomGenerator:
-    def __init__(self, min_val=0, max_val=7, increment=0.1):
-        self.min = min_val
-        self.max = max_val
-        self.increment = increment
-        self.current = random.uniform(min_val, max_val)
-    
-    def get_next(self):
-        direction = random.choice([-1, 1])
-        self.current += direction * self.increment
-        self.current = max(self.min, min(self.max, self.current))
-        return round(self.current, 2)
+
     
 
 class DataBackupHandler:
