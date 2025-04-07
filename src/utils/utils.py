@@ -15,14 +15,12 @@ try:
     from adafruit_ads1x15.analog_in import AnalogIn
     import busio
     import board 
-    
     i2c = busio.I2C(board.SCL, board.SDA)
     ads = ADS.ADS1115(i2c)
+
 except Exception: 
     print("Activating simulation mode...")
     simulation_mode = True
-
-
 
 port_map = [ADS.P0, ADS.P1, ADS.P2, ADS.P3]
 
@@ -38,7 +36,6 @@ class IncrementalRandomGenerator:
         self.current += direction * self.increment
         self.current = max(self.min, min(self.max, self.current))
         return round(self.current, 2)
-    
     
 random_gen = IncrementalRandomGenerator(3000,16000,50)
 
@@ -116,8 +113,6 @@ class AnalogCommunication:
             self.error=True
 
 
-
-    
 
 class DataBackupHandler:
     def __init__(self):
