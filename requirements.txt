@@ -4,7 +4,9 @@
 #
 #    pip-compile requirements.in
 #
-adafruit-blinka==8.50.0
+--extra-index-url https://www.piwheels.org/simple
+
+adafruit-blinka==8.56.0
     # via
     #   -r requirements.in
     #   adafruit-circuitpython-ads1x15
@@ -12,21 +14,21 @@ adafruit-blinka==8.50.0
     #   adafruit-circuitpython-connectionmanager
     #   adafruit-circuitpython-requests
     #   adafruit-circuitpython-typing
-adafruit-circuitpython-ads1x15==2.4.1
+adafruit-circuitpython-ads1x15==2.4.2
     # via -r requirements.in
-adafruit-circuitpython-busdevice==5.2.10
+adafruit-circuitpython-busdevice==5.2.11
     # via
     #   adafruit-circuitpython-ads1x15
     #   adafruit-circuitpython-typing
-adafruit-circuitpython-connectionmanager==3.1.2
+adafruit-circuitpython-connectionmanager==3.1.3
     # via adafruit-circuitpython-requests
-adafruit-circuitpython-requests==4.1.8
+adafruit-circuitpython-requests==4.1.10
     # via adafruit-circuitpython-typing
 adafruit-circuitpython-typing==1.11.2
     # via
     #   adafruit-blinka
     #   adafruit-circuitpython-busdevice
-adafruit-platformdetect==3.76.1
+adafruit-platformdetect==3.77.0
     # via adafruit-blinka
 adafruit-pureio==1.1.11
     # via adafruit-blinka
@@ -36,7 +38,7 @@ binho-host-adapter==0.1.6
     # via adafruit-blinka
 board==1.0
     # via -r requirements.in
-certifi==2024.12.14
+certifi==2025.1.31
     # via requests
 charset-normalizer==3.4.1
     # via requests
@@ -46,7 +48,9 @@ h11==0.14.0
     # via wsproto
 idna==3.10
     # via requests
-numpy==2.2.1
+lgpio==0.2.2.0
+    # via -r requirements.in
+numpy==2.2.4
     # via
     #   -r requirements.in
     #   pandas
@@ -55,7 +59,7 @@ pandas==2.2.3
     # via -r requirements.in
 pyftdi==0.56.0
     # via adafruit-blinka
-pymongo==4.10.1
+pymongo==4.12.0
     # via -r requirements.in
 pyserial==3.5
     # via
@@ -63,13 +67,13 @@ pyserial==3.5
     #   pyftdi
 python-dateutil==2.9.0.post0
     # via pandas
-python-dotenv==1.0.1
+python-dotenv==1.1.0
     # via -r requirements.in
 python-engineio==4.11.2
     # via python-socketio
 python-socketio[client]==5.12.1
     # via -r requirements.in
-pytz==2024.2
+pytz==2025.2
     # via pandas
 pyusb==1.3.1
     # via pyftdi
@@ -77,19 +81,25 @@ requests==2.32.3
     # via
     #   -r requirements.in
     #   python-socketio
+rpi-gpio==0.7.1
+    # via adafruit-blinka
+rpi-ws281x==5.0.0
+    # via adafruit-blinka
 schedule==1.2.2
     # via -r requirements.in
-scipy==1.15.1
+scipy==1.15.2
     # via -r requirements.in
 simple-websocket==1.1.0
     # via python-engineio
 six==1.17.0
     # via python-dateutil
-typing-extensions==4.12.2
+sysv-ipc==1.1.0
+    # via adafruit-blinka
+typing-extensions==4.13.1
     # via
     #   adafruit-circuitpython-ads1x15
     #   adafruit-circuitpython-typing
-tzdata==2024.2
+tzdata==2025.2
     # via pandas
 urllib3==2.3.0
     # via requests

@@ -8,7 +8,7 @@ import threading
 # Add parent directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
 try:
-    import RPi.GPIO as GPIO
+    import lgpio
 except ImportError:
     from utils.mock_gpio import MockGPIO 
     GPIO = MockGPIO()
@@ -18,6 +18,8 @@ from settings import port_mapper, logger, device_handler
 
 
 gpio_lock = threading.Lock()
+chip = lgpio.gpiochip_open(0)
+
 
 
 class PHController:
@@ -63,10 +65,10 @@ class PHController:
 
     def init_gpio(self):  
         print("Setting GPIO mode.")
-        GPIO.setmode(GPIO.BCM)
-        GPIO.cleanup()
-        GPIO.setup(self.alkaline_pump_pin, GPIO.OUT)
-        GPIO.setup(self.acidic_pump_pin, GPIO.OUT)
+        lgpio.gpio_claim_output(chip, self.alkaline_pump_pin, level=1)
+        lgpio.gpio_claim_output(chip, self.acidic_pump_pin, level=1)
+
+
 
     def read_ph(self):
         try: 
@@ -128,9 +130,10 @@ class PHController:
         logger.info(f"Pumping for {round(pump_time,2)} seconds")
         print("GPIO PIN: ",pump_pin)
         with gpio_lock:  
-            GPIO.output(pump_pin, GPIO.LOW)
+            lgpio.gpio_write(chip, pump_pin, 0)
             time.sleep(pump_time)
-            GPIO.output(pump_pin, GPIO.HIGH)
+            lgpio.gpio_write(chip, pump_pin, 1)
+
         self.send_client_pump_information(pump_pin, "Closing valve", False)
         
         
@@ -144,14 +147,15 @@ class PHController:
             if overide_status != None: 
                 self.is_pumping_acid = not overide_status
             action = "Opening" if not self.is_pumping_acid else "Closing"
-            GPIO.output(self.acidic_pump_pin, GPIO.HIGH if not self.is_pumping_acid else GPIO.LOW)
+            lgpio.gpio_write(chip, self.acidic_pump_pin, 1 if not self.is_pumping_acid else 0)
+            
             self.send_log_to_client("info", f"{action} acidic pump", self.location)
             self.is_pumping_acid = not self.is_pumping_acid
         else: 
             if overide_status != None: 
                 self.is_pumping_base = not overide_status
             action = "Opening" if not self.is_pumping_base else "Closing"
-            GPIO.output(self.alkaline_pump_pin, GPIO.HIGH if not self.is_pumping_base else  GPIO.LOW)
+            lgpio.gpio_write(chip, self.alkaline_pump_pin, 1 if not self.is_pumping_acid else 0)            
             self.send_log_to_client("info", f"{action} alkaline pump", self.location)
             self.is_pumping_base = not self.is_pumping_base
         status = self.is_pumping_acid if pump == "acidic" else self.is_pumping_base
@@ -160,7 +164,7 @@ class PHController:
         
     def stop(self): 
         self.is_running = False
-        GPIO.cleanup()
+        lgpio.gpiochip_close(chip)
         logger.info("Monitorization stopped")
  
 
@@ -257,7 +261,7 @@ class SensorManager:
                 time_ellapsed = time_ellapsed + 1
         except Exception as err:
             logger.error(err)
-            GPIO.cleanup()
+            lgpio.gpiochip_close(chip)
             logger.info("Operation aborted by the user...")
             self.send_log_to_client("error", f"An error occured during data aquisition: {err}", "Device")
            
@@ -267,36 +271,40 @@ class SensorManager:
     def stop_controllers(self): 
         self.is_running = False
         self.controllers = []
-        GPIO.cleanup()
+        lgpio.gpiochip_close(chip)
         logger.info("Monitorization stopped")
 
 
 def notifiy_client(x,y,z): 
     print("Notifiy the client")
 
+
+def disconnect_pumps(): 
+    lgpio.gpio_write(chip, 10, 1)
+    lgpio.gpio_write(chip, 9, 1)
+
 if __name__ == "__main__":
     try:
-        #pump_pin = 10
-        #pump_time = 1
+
+
         probe = "i4"
-        #GPIO.setmode(GPIO.BCM)
         
         controler = PHController(
             location=None, 
             send_log_to_client=notifiy_client,
             device_port=probe, 
-            target_ph=3.0, 
+            target_ph=10.0, 
             mode="acidic",
             update_client_pump_status=notifiy_client
         )
         
-        
         controler.adjust_ph()
         
        
-        
+
         #controller.port_mapper.set_calibration_value(probe, "acidic_value", read)
         
 
-    except: 
-        GPIO.cleanup()
+    except Exception as err:
+        print("Error: ", err) 
+        lgpio.gpiochip_close(chip)
