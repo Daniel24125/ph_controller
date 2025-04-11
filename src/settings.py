@@ -14,7 +14,8 @@ port_mapper = DeviceInputMappingHandler()
 error_logger = ErrorLogger("src/logs",None, 100,30)
 
 # Access the server and ping it to keep it alive
-SERVER_URL="https://sensormonitorss.onrender.com"
-PING_URL="https://sensormonitorss.onrender.com/health"
+# SERVER_URL="https://sensormonitorss.onrender.com"
+SERVER_URL="http://localhost:8000"
+PING_URL=f"{SERVER_URL}/health"
 INTERVAL_MINUTES = 10  # How often to ping (in minutes)
 TIMEOUT = 5 # Request timeout in seconds
