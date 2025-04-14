@@ -284,6 +284,27 @@ def disconnect_pumps():
     lgpio.gpio_write(chip, 10, 1)
     lgpio.gpio_write(chip, 9, 1)
 
+def get_ph_read(controller): 
+    pin = controller.acidic_pump_pin
+    lgpio.gpio_write(chip, pin, 0)
+    time.sleep(10)
+    lgpio.gpio_write(chip, pin, 1)
+
+def adjust_ph(controller): 
+    while True:
+        controller.adjust_ph()
+        time.sleep(5)
+
+def get_analog_value(controller): 
+    while True:
+        read = controller.comunicator.get_analog_read()
+        print(read)
+        time.sleep(1)
+
+def calibrate(probe, controller): 
+    read = controller.comunicator.get_analog_read()
+    port_mapper.set_calibration_value(probe, "alkaline_value", read)
+
 if __name__ == "__main__":
     try:
         probe = "i4"
@@ -297,23 +318,7 @@ if __name__ == "__main__":
             max_pump_time=0.3
         )
 
-        pin = controller.acidic_pump_pin
-        lgpio.gpio_write(chip, pin, 0)
-        time.sleep(10)
-        lgpio.gpio_write(chip, pin, 1)
-        # while True:
-        #     controller.adjust_ph()
-        #     time.sleep(5)
-
-        # ph = controller.read_ph()
-        # print(ph)
-        # while True:
-        #     read = controller.comunicator.get_read()
-        #     print(read)
-        #     time.sleep(1)
-        # read = controller.comunicator.get_analog_read()
-        # port_mapper.set_calibration_value(probe, "alkaline_value", read)
-        
+        adjust_ph(controller)
 
     except Exception as err:
         print("Error: ", err) 
