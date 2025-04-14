@@ -68,8 +68,6 @@ class PHController:
         lgpio.gpio_claim_output(chip, self.alkaline_pump_pin, level=1)
         lgpio.gpio_claim_output(chip, self.acidic_pump_pin, level=1)
 
-
-
     def read_ph(self):
         try: 
             logger.info("Getting the current pH value...")
@@ -135,19 +133,18 @@ class PHController:
             lgpio.gpio_write(chip, pump_pin, 1)
 
         self.send_client_pump_information(pump_pin, "Closing valve", False)
-        
-        
+          
     def send_client_pump_information(self, pump_pin, log, status): 
         self.update_client_pump_status(self.location, "acidic" if pump_pin==self.acidic_pump_pin else self.alkaline_pump_pin, status)
         self.send_log_to_client("info", log, self.location)
 
-
     def toggle_pump(self, pump, overide_status=None): 
+        logger.info(f"Toggle {pump} pump")
         if pump == "acidic": 
             if overide_status != None: 
                 self.is_pumping_acid = not overide_status
             action = "Opening" if not self.is_pumping_acid else "Closing"
-            lgpio.gpio_write(chip, self.acidic_pump_pin, 1 if not self.is_pumping_acid else 0)
+            lgpio.gpio_write(chip, self.acidic_pump_pin, 0 if not self.is_pumping_acid else 1)
             
             self.send_log_to_client("info", f"{action} acidic pump", self.location)
             self.is_pumping_acid = not self.is_pumping_acid
@@ -155,13 +152,12 @@ class PHController:
             if overide_status != None: 
                 self.is_pumping_base = not overide_status
             action = "Opening" if not self.is_pumping_base else "Closing"
-            lgpio.gpio_write(chip, self.alkaline_pump_pin, 1 if not self.is_pumping_acid else 0)            
+            lgpio.gpio_write(chip, self.alkaline_pump_pin, 0 if not self.is_pumping_acid else 1)            
             self.send_log_to_client("info", f"{action} alkaline pump", self.location)
             self.is_pumping_base = not self.is_pumping_base
         status = self.is_pumping_acid if pump == "acidic" else self.is_pumping_base
         return (pump, status)
-        
-        
+         
     def stop(self): 
         self.is_running = False
         lgpio.gpiochip_close(chip)
@@ -285,24 +281,33 @@ def disconnect_pumps():
 
 if __name__ == "__main__":
     try:
-
-
         probe = "i4"
-        
-        controler = PHController(
+        controller = PHController(
             location=None, 
             send_log_to_client=notifiy_client,
             device_port=probe, 
-            target_ph=10.0, 
+            target_ph=5.0, 
             mode="acidic",
-            update_client_pump_status=notifiy_client
+            update_client_pump_status=notifiy_client,
+            max_pump_time=0.3
         )
-        
-        controler.adjust_ph()
-        
-       
 
-        #controller.port_mapper.set_calibration_value(probe, "acidic_value", read)
+        pin = controller.acidic_pump_pin
+        lgpio.gpio_write(chip, pin, 0)
+        time.sleep(10)
+        lgpio.gpio_write(chip, pin, 1)
+        # while True:
+        #     controller.adjust_ph()
+        #     time.sleep(5)
+
+        # ph = controller.read_ph()
+        # print(ph)
+        # while True:
+        #     read = controller.comunicator.get_read()
+        #     print(read)
+        #     time.sleep(1)
+        # read = controller.comunicator.get_analog_read()
+        # port_mapper.set_calibration_value(probe, "alkaline_value", read)
         
 
     except Exception as err:

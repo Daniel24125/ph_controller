@@ -72,6 +72,10 @@ class AnalogCommunication:
 
     # This method is responsible for getting an analog read of the sensors. The read value corresponds to an average of 20 reads (i.e., 20 by default)
     def get_read(self, NUM_MEAS_FOR_AVG=20):
+        analog_avg = self.get_analog_read(NUM_MEAS_FOR_AVG)
+        return self.convert_analog(analog_avg)
+
+    def get_analog_read(self, NUM_MEAS_FOR_AVG=20): 
         self.ready=False
         analog_values = np.zeros(NUM_MEAS_FOR_AVG)
         for i in range(NUM_MEAS_FOR_AVG):
@@ -82,7 +86,6 @@ class AnalogCommunication:
                 else:
                     probe = self.sensor_config["probe"]
                     an_read = AnalogIn(ads, port_map[probe]).value
-                    print("Getting Analog value: ",an_read)
 
                 analog_values[i] = an_read
             except Exception as err:
@@ -92,7 +95,7 @@ class AnalogCommunication:
         mask = np.ma.masked_equal(analog_values,0).compressed()
         analog_avg = np.average(mask)
         self.ready=True
-        return self.convert_analog(analog_avg)
+        return analog_avg
 
     # This method is responsible for converting the analog read to the pH value according to the sensors' calibration curve
     def convert_analog(self, analog_read):
