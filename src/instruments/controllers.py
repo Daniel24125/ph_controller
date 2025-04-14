@@ -9,16 +9,19 @@ import threading
 sys.path.append(str(Path(__file__).parent.parent))
 try:
     import lgpio
+    chip = lgpio.gpiochip_open(0)
+
 except ImportError:
-    from utils.mock_gpio import MockGPIO 
-    GPIO = MockGPIO()
+    from utils.mock_gpio import MockLGPIO 
+    lgpio = MockLGPIO()
+    chip = lgpio.gpiochip_open(0)
+
 
 from utils.utils import  AnalogCommunication
 from settings import port_mapper, logger, device_handler
 
 
 gpio_lock = threading.Lock()
-chip = lgpio.gpiochip_open(0)
 
 
 
@@ -87,6 +90,7 @@ class PHController:
         is_acidic = current_ph < self.target_ph ## if the solution is acidic, you need to pump a base solution
         define_base_pump = self.mode == "alkaline" or self.mode == "auto"
         define_acid_pump = self.mode == "acidic" or self.mode == "auto"
+
         if is_acidic and define_base_pump:
             logger.info("Base pump activated!")
             pump_pin = self.alkaline_pump_pin
@@ -106,9 +110,10 @@ class PHController:
         if self.target_ph - self.margin <= current_ph <= self.target_ph + self.margin:
             logger.info("pH value with the margin values. No adjustment necessary")
             return
-        pump, pump_pin = self.determine_pump(current_ph)
-        if not pump_pin: 
+        pump_info = self.determine_pump(current_ph)
+        if not pump_info: 
             return 
+        pump, pump_pin = pump_info
         pump_time = self.calculate_pump_time(current_ph)
         t = threading.Thread(target=self.change_pump_state, args=(pump, pump_pin , pump_time))
         t.start()
@@ -126,7 +131,7 @@ class PHController:
     def activate_pump(self, pump_pin, pump_time):
         self.send_client_pump_information(pump_pin, f"Pumping for {round(pump_time,2)} seconds", True)
         logger.info(f"Pumping for {round(pump_time,2)} seconds")
-        print("GPIO PIN: ",pump_pin)
+
         with gpio_lock:  
             lgpio.gpio_write(chip, pump_pin, 0)
             time.sleep(pump_time)
@@ -286,7 +291,7 @@ if __name__ == "__main__":
             location=None, 
             send_log_to_client=notifiy_client,
             device_port=probe, 
-            target_ph=5.0, 
+            target_ph=3.0, 
             mode="acidic",
             update_client_pump_status=notifiy_client,
             max_pump_time=0.3

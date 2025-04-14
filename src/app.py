@@ -23,6 +23,7 @@ sio = socketio.Client(
 def ping_server():
     """
     Ping a server URL and log the response.
+    Retries every 5 seconds if the connection times out.
     
     Returns:
         bool: True if ping was successful, False otherwise
@@ -36,6 +37,10 @@ def ping_server():
         else:
             logger.warning(f"Ping to {PING_URL} returned status code {response.status_code}")
             return False
+    except requests.exceptions.Timeout:
+        logger.warning(f"Connection to {PING_URL} timed out. Retrying in 5 seconds...")
+        time.sleep(5)
+        
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to ping {PING_URL}: {str(e)}")
         return False
@@ -43,6 +48,7 @@ def ping_server():
 
 def keep_server_alive():
      while True:
+        logger.info("Trying to ping the server to keep it alive")
         ping_server()
         # Sleep for the specified interval
         time.sleep(INTERVAL_MINUTES * 60)
@@ -218,9 +224,7 @@ import threading
 
 if __name__ == "__main__": 
     try:
-        # socket = DeviceSocketClient(server_url="http://localhost:8000")
         socket = DeviceSocketClient(server_url=SERVER_URL)
-        # socket = DeviceSocketClient(server_url="https://cheerful-luci-daniel-projects-252ddbbb.koyeb.app")
         thread = threading.Thread(target=keep_server_alive)
         
         thread.start()
