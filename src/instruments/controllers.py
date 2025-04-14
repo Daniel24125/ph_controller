@@ -112,6 +112,8 @@ class PHController:
             return
         pump_info = self.determine_pump(current_ph)
         if not pump_info: 
+            logger.info("No need to adjust pH due to the pH mode selected.")
+
             return 
         pump, pump_pin = pump_info
         pump_time = self.calculate_pump_time(current_ph)
@@ -312,7 +314,7 @@ if __name__ == "__main__":
             location=None, 
             send_log_to_client=notifiy_client,
             device_port=probe, 
-            target_ph=5.0, 
+            target_ph=12, 
             mode="acidic",
             update_client_pump_status=notifiy_client,
             max_pump_time=0.3
